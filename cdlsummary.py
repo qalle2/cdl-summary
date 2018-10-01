@@ -2,12 +2,6 @@ import getopt
 import os.path
 import sys
 
-# 0Pdc AADC
-# P = PCM, d = indirect data, c = indirect code, AA = bank, D = data, C = code
-
-# 0000 00RD
-# R = read programmatically from $2007, D = drawn on screen
-
 HELP_TEXT = """\
 Reads a CDL file (extension .cdl, created with FCEUX Code/Data Logger)
 and prints it with repeating bytes grouped together.
@@ -16,7 +10,6 @@ Command line arguments:
     -b X, --prg-rom-banks=X
         X is the PRG-ROM size in 16-KiB (16,384-byte) banks.
         The value must be 1 to 255.
-        See below for how to find out the correct value.
         This argument is required.
     -p X, --part=X
         X is the part to read from the CDL file:
@@ -27,7 +20,7 @@ Command line arguments:
     -o X, --output-format=X
         X is the output format:
             L   long (human-readable, the default)
-            S   short (CSV, machine-readable, see below)
+            S   short (CSV, machine-readable)
         This argument is case insensitive.
         This argument is optional.
     --omit-unaccessed
@@ -42,27 +35,7 @@ Command line arguments:
         Has no effect with CHR-ROM data.
     INPUT_FILE
         CDL file to read.
-        The file size must be 16 to 6120 KiB and a multiple of 8 KiB.
-
-How to find out the PRG-ROM size:
-    1. Open the iNES ROM file (extension .nes, NOT the CDL file) in a
-       hex editor.
-    2. The number of 16-KiB PRG-ROM banks is in offset 4 (the fifth
-       byte). It is very often a power of two.
-    3. Convert the number from hexadecimal to decimal (with e.g. the
-       Windows Calculator).
-
-PRG-ROM size autodetection:
-    - If CDL file is 16 or 32 KiB, the PRG-ROM size defaults to the
-      file size.
-    - For CDL files of other sizes, the PRG-ROM size defaults to the
-      largest power of two that is less than the file size (e.g. 64 KiB
-      for files of 72 to 128 KiB).
-
-In short (CSV) output, the columns are:
-    - start position of repeating bytes in decimal (0 or greater)
-    - number of repeating bytes in decimal (1 or greater)
-    - byte value in decimal (0 to 255)\
+        The file size must be 16 to 6120 KiB and a multiple of 8 KiB.\
 """
 
 PRG_BANK_SIZE = 16 * 1024
