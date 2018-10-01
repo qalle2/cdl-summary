@@ -3,10 +3,10 @@ Prints a summary of a Code/Data Logger file (extension `.cdl`) created with the 
 
 ## CDL files
 A CDL file consists of two parts:
-1. PRG-ROM log data (16 to 4080 KiB and a multiple of 16 KiB; often a power of two)
-1. CHR-ROM log data (0 to 2040 KiB and a multiple of 8 KiB; often zero or a power of two)
+1. PRG-ROM log data (16 to 4,080 KiB and a multiple of 16 KiB; often a power of two)
+1. CHR-ROM log data (0 to 2,040 KiB and a multiple of 8 KiB; often zero or a power of two)
 
-See the FCEUX built-in help for more information on the file format.
+See the FCEUX help (Help -> Help... -> Debug -> Code/Data Logger) for more information on the file format.
 
 ## How to find out the PRG-ROM size of an iNES ROM file
 The program needs to know how the PRG-ROM size of the CDL file (in 16-KiB banks).
