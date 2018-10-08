@@ -56,9 +56,9 @@ A `.cdl` file consists of two parts:
 
 See the FCEUX help (Help &rarr; Help&hellip; &rarr; Debug &rarR; Code/Data Logger) for more information on the file format.
 
-# Examples
+## Examples
 
-## PRG-ROM CDL data
+### PRG-ROM CDL data
 ```
 python cdlsummary.py -b 2 -p p smb.cdl
 Start address, end address, length, description:
@@ -82,7 +82,7 @@ Start address, end address, length, description:
 7ffe-7fff (    2): unaccessed
 ```
 
-## CHR-ROM CDL data
+### CHR-ROM CDL data
 ```
 python cdlsummary.py -b 2 -p c smb.cdl
 Start address, end address, length, description:
