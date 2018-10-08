@@ -43,7 +43,7 @@ A `.cdl` file consists of two parts:
 1. PRG-ROM log data (16 KiB to 4,080 KiB and a multiple of 16 KiB)
 1. CHR-ROM log data (0 bytes to 2,040 KiB and a multiple of 8 KiB)
 
-See the FCEUX help (Help &rarr; Help&hellip; &rarr; Debug &rarR; Code/Data Logger) for more information on the file format.
+See the FCEUX help (Help &rarr; Help&hellip; &rarr; Debug &rarr; Code/Data Logger) for more information on the file format.
 
 ## Examples
 
