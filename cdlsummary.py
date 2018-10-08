@@ -2,42 +2,6 @@ import getopt
 import os.path
 import sys
 
-HELP_TEXT = """\
-Reads a CDL file (extension .cdl, created with FCEUX Code/Data Logger)
-and prints it with repeating bytes grouped together.
-
-Command line arguments:
-    -b X, --prg-rom-banks=X
-        X is the PRG-ROM size in 16-KiB (16,384-byte) banks.
-        The value must be 1 to 255.
-        This argument is required.
-    -p X, --part=X
-        X is the part to read from the CDL file:
-            P   PRG-ROM (the default)
-            C   CHR-ROM
-        This argument is case insensitive.
-        This argument is optional.
-    -o X, --output-format=X
-        X is the output format:
-            L   long (human-readable, the default)
-            S   short (CSV, machine-readable)
-        This argument is case insensitive.
-        This argument is optional.
-    --omit-unaccessed
-        Exclude unaccessed bytes from the output.
-    --ignore-method
-        Do not care whether bytes were accessed as PCM data,
-        nor whether they were accessed indirectly or directly.
-        Has no effect with CHR-ROM data.
-    --ignore-bank
-        Do not care which bank PRG-ROM bytes were mapped to when last
-        accessed.
-        Has no effect with CHR-ROM data.
-    INPUT_FILE
-        CDL file to read.
-        The file size must be 16 to 6120 KiB and a multiple of 8 KiB.\
-"""
-
 PRG_BANK_SIZE = 16 * 1024
 CHR_BANK_SIZE = 8 * 1024
 
@@ -54,16 +18,8 @@ CHR_DRAWN = 0b0000_0001
 # maximum size of buffer when reading files, in bytes
 FILE_BUFFER_MAX_SIZE = 2 ** 20
 
-def to_ASCII(string):
-    """Replace non-ASCII characters with backslash codes."""
-    byteString = string.encode("ascii", errors="backslashreplace")
-    return byteString.decode("ascii")
-
 def parse_arguments():
     """Parse command line arguments using getopt."""
-    if len(sys.argv) == 1:
-        print(HELP_TEXT)
-        exit(0)
 
     longOpts = (
         "prg-rom-banks=",
@@ -76,10 +32,10 @@ def parse_arguments():
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], "b:p:o:", longOpts)
     except getopt.GetoptError:
-        exit("Error: unrecognized option.")
+        exit("Error: invalid option. See the readme file.")
 
     if len(args) != 1:
-        exit("Error: invalid number of arguments.")
+        exit("Error: invalid number of arguments. See the readme file.")
 
     opts = dict(opts)
 
@@ -156,6 +112,7 @@ def parse_arguments():
 
 def read_file(handle, start, bytesLeft):
     """Yield a slice from a file in chunks."""
+
     handle.seek(start)
     while bytesLeft > 0:
         chunkSize = min(bytesLeft, FILE_BUFFER_MAX_SIZE)
@@ -211,18 +168,22 @@ def generate_repeating_bytes(handle, settings):
         yield (repeatPos, length, repeatByte)
 
 def format_byte_description(byte, settings):
+    """Describe a CDL byte."""
+
     if byte == 0:
         return "unaccessed"
 
     items = []
     if settings["part"] == "P":
+        # PRG-ROM log
         if byte & PRG_CODE:
+            # code
             if byte & PRG_INDIRECT_CODE:
                 items.append("code (indirectly accessed)")
             else:
                 items.append("code")
-
         if byte & PRG_DATA:
+            # data
             if byte & PRG_INDIRECT_DATA and byte & PRG_PCM_DATA:
                 items.append("data (indirectly accessed & PCM audio)")
             elif byte & PRG_INDIRECT_DATA:
@@ -231,23 +192,28 @@ def format_byte_description(byte, settings):
                 items.append("data (PCM audio)")
             else:
                 items.append("data")
-
-        bank = 0x8000 + ((byte >> 2) & 0b11) * 0x2000
         if not settings["ignoreBank"]:
+            # bank
+            bank = 0x8000 + ((byte >> 2) & 0b11) * 0x2000
             items.append("mapped to 0x{:04x}-0x{:04x}".format(
                 bank, bank + 0x1fff
             ))
     else:
+        # CHR-ROM log
         if byte & CHR_READ:
             items.append("read programmatically")
         if byte & CHR_DRAWN:
-            items.append("rendered by PPU")
+            items.append("rendered")
 
     return ", ".join(items)
 
 def long_output(handle, settings):
-    print("Start address, end address, length, description:")
-    print("(addresses in hexadecimal, lengths in decimal)")
+    """Print output in long (human-readable) format."""
+
+    print(
+        "Start address (hexadecimal), end address (hexadecimal), length "
+        "(decimal), description:"
+    )
 
     maxAddrLen = len(format(settings["partLength"] - 1, "x"))
     maxRunLen = len(str(settings["partLength"]))
@@ -266,6 +232,8 @@ def long_output(handle, settings):
         ))
 
 def short_output(handle, settings):
+    """Print output in short (CSV) format."""
+
     print('"start","length","byte"')
     for repeatByteData in generate_repeating_bytes(handle, settings):
         print(",".join(str(n) for n in repeatByteData))
