@@ -1,10 +1,12 @@
 import getopt
+import math
 import os.path
 import sys
 
 PRG_BANK_SIZE = 16 * 1024
 CHR_BANK_SIZE = 8 * 1024
 
+# CDL bitmasks - PRG-ROM bytes
 PRG_PCM_DATA = 0b0100_0000
 PRG_INDIRECT_DATA = 0b0010_0000
 PRG_INDIRECT_CODE = 0b0001_0000
@@ -12,11 +14,22 @@ PRG_BANK = 0b0000_1100
 PRG_DATA = 0b0000_0010
 PRG_CODE = 0b0000_0001
 
+# CDL bitmasks - CHR-ROM bytes
 CHR_READ = 0b0000_0010
 CHR_DRAWN = 0b0000_0001
 
 # maximum size of buffer when reading files, in bytes
 FILE_BUFFER_MAX_SIZE = 2 ** 20
+
+def guess_PRG_size(fileSize):
+    """Guess the PRG-ROM size based on the CDL file size."""
+
+    log = math.ceil(math.log2(fileSize))
+    if log > 22:
+        # over 4 MiB
+        exit("Error: could not autodetect the PRG-ROM size.")
+    # half the CDL size, rounded up to the next power of two
+    return 2 ** max(log - 1, 14)
 
 def parse_arguments():
     """Parse command line arguments using getopt."""
@@ -40,16 +53,15 @@ def parse_arguments():
     opts = dict(opts)
 
     # PRG-ROM size
-    prgBankCount = opts.get("--prg-rom-banks", opts.get("-b"))
-    if prgBankCount is None:
-        exit("Error: the PRG-ROM size argument is required.")
-    try:
-        prgBankCount = int(prgBankCount, 10)
-        if not 1 <= prgBankCount <= 255:
-            raise ValueError
-    except ValueError:
-        exit("Error: invalid number of PRG-ROM banks.")
-    prgSize = prgBankCount * PRG_BANK_SIZE
+    prgSize = opts.get("--prg-rom-banks", opts.get("-b"))
+    if prgSize is not None:
+        try:
+            prgSize = int(prgSize, 10)
+            if not 1 <= prgSize <= 255:
+                raise ValueError
+        except ValueError:
+            exit("Error: invalid number of PRG-ROM banks.")
+        prgSize *= PRG_BANK_SIZE
 
     # part
     part = opts.get("--part", opts.get("-p", "P")).upper()
@@ -70,16 +82,24 @@ def parse_arguments():
     source = args[0]
     if not os.path.isfile(source):
         exit("Error: file not found.")
-    sourceSize = os.path.getsize(source)
+    try:
+        sourceSize = os.path.getsize(source)
+    except OSError:
+        exit("Error getting input file size.")
 
     # validate file size (one PRG bank equals two CHR banks)
     (bankCount, remainder) = divmod(sourceSize, CHR_BANK_SIZE)
-    if not 2 <= bankCount <= 255 * 3 or remainder > 0:
+    if not 2 <= bankCount <= 255 * 3 or remainder:
         exit("Error: invalid file size.")
 
-    # validate PRG size
-    if prgSize > sourceSize:
-        exit("Error: PRG-ROM size cannot be larger than file size.")
+    # guess or validate PRG size
+    if prgSize is None:
+        prgSize = guess_PRG_size(sourceSize)
+        print("Warning: PRG-ROM size not specified, guessing {:d} KiB.".format(
+            prgSize // 1024
+        ))
+    elif prgSize > sourceSize:
+        exit("Error: PRG-ROM size is greater than file size.")
 
     # validate CHR-ROM size
     (chrBankCount, remainder) = divmod(sourceSize - prgSize, CHR_BANK_SIZE)
