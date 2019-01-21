@@ -668,4 +668,3 @@ Start address (hexadecimal), end address (hexadecimal), length (decimal), descri
 ## To do
 * add option: origin address (default 8000 for PRG, 0000 for CHR)
 * add option: bank size (default 8000 for PRG, 2000 for CHR)
-* fix bug: when using --ignore-method (and others?), consecutive identical chunks should be merged
