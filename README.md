@@ -664,3 +664,8 @@ Start address (hexadecimal), end address (hexadecimal), length (decimal), descri
 19b0-1ebf (1296): rendered
 1ec0-1ff9 ( 314): read programmatically
 ```
+
+## To do
+* add option: origin address (default 8000 for PRG, 0000 for CHR)
+* add option: bank size (default 8000 for PRG, 2000 for CHR)
+* fix bug: when using --ignore-method (and others?), consecutive identical chunks should be merged
