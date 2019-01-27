@@ -15,10 +15,6 @@ Syntax: [*options*] *input_file*
   * Which part to read from *input_file* (case insensitive):
     * `P`: PRG ROM (the default)
     * `C`: CHR ROM
-* `-o` *format* or `--output-format`=*format*
-  * The output format (case insensitive):
-    * `L`: long (human-readable, the default)
-    * `S`: short (CSV, machine-readable)
 * `--omit-unaccessed`
   * Exclude unaccessed bytes from the output.
 * `--ignore-method`
@@ -45,6 +41,8 @@ Syntax: [*options*] *input_file*
   * If the CHR ROM part is being examined:
     * valid values: `0000`&hellip;`1c00` and a multiple of `400`
     * default: `0000`
+* `--csv`
+  * Output in machine-readable format (CSV, decimal integers separated by commas).
 
 Note: CPU/PPU origin address plus ROM bank size must not exceed 64 KiB for PRG ROM or 8 KiB for CHR ROM.
 

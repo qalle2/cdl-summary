@@ -22,13 +22,13 @@ CHR_DRAWN = 0b0000_0001
 FILE_BUFFER_MAX_SIZE = 2 ** 20
 
 # for getopt
-SHORT_OPTS = "b:p:o:"
+SHORT_OPTS = "b:p:"
 LONG_OPTS = (
     "cpu-origin-address=",
+    "csv",
     "ignore-cpu-bank",
     "ignore-method",
     "omit-unaccessed",
-    "output-format=",
     "part=",
     "prg-rom-banks=",
     "rom-bank-size=",
@@ -114,15 +114,11 @@ def parse_arguments():
     if part not in ("P", "C"):
         exit("Invalid part argument.")
 
-    # output format
-    outputFormat = opts.get("--output-format", opts.get("-o", "L")).upper()
-    if outputFormat not in ("L", "S"):
-        exit("Invalid output format argument.")
-
     # switches
-    omitUnaccessed = "--omit-unaccessed" in opts
-    ignoreMethod = "--ignore-method" in opts
+    CSVOutput = "--csv" in opts
     ignoreCPUBank = "--ignore-cpu-bank" in opts
+    ignoreMethod = "--ignore-method" in opts
+    omitUnaccessed = "--omit-unaccessed" in opts
 
     # input file
     source = args[0]
@@ -204,10 +200,10 @@ def parse_arguments():
 
     return {
         "CPUOriginAddress": CPUOriginAddress,
+        "CSVOutput": CSVOutput,
         "ignoreCPUBank": ignoreCPUBank,
         "ignoreMethod": ignoreMethod,
         "omitUnaccessed": omitUnaccessed,
-        "outputFormat": outputFormat,
         "part": part,
         "partLength": partLength,
         "partStart": partStart,
@@ -350,8 +346,8 @@ def format_CHR_byte_description(byte):
 
     return ", ".join(items)
 
-def long_output(handle, settings):
-    """Print output in long (human-readable) format."""
+def normal_output(handle, settings):
+    """Print output in human-readable format."""
 
     for (addr, length, byte) in generate_blocks(handle, settings):
         (ROMBank, CPUAddr) = format_address(addr, settings)
@@ -367,8 +363,8 @@ def long_output(handle, settings):
             "{:s}".format(ROMBank, CPUAddr, CPUAddrEnd, length, descr)
         )
 
-def short_output(handle, settings):
-    """Print output in short (CSV) format."""
+def CSV_output(handle, settings):
+    """Print output in CSV (machine-readable) format."""
 
     print('"ROM bank","CPU/PPU address","length","CDL byte"')
 
@@ -384,10 +380,10 @@ def main():
         with open(settings["source"], "rb") as handle:
             validate_CDL_data(handle, settings)
 
-            if settings["outputFormat"] == "L":
-                long_output(handle, settings)
+            if settings["CSVOutput"]:
+                CSV_output(handle, settings)
             else:
-                short_output(handle, settings)
+                normal_output(handle, settings)
     except OSError:
         exit("Error reading the file.")
 
