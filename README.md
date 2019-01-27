@@ -70,7 +70,7 @@ See the FCEUX help (Help &rarr; Help&hellip; &rarr; Debug &rarr; Code/Data Logge
 
 ### PRG ROM CDL data
 ```
-python cdlsummary.py cdl\excite.cdl
+python cdl_summary.py cdl\excite.cdl
 
 Warning: PRG ROM size not specified, guessing 16 KiB.
 ROM bank 000, CPU address c000-c007, length 0008: data
@@ -89,7 +89,7 @@ ROM bank 000, CPU address c05c-c063, length 0008: unaccessed
 
 ### CHR ROM CDL data
 ```
-python cdlsummary.py --part=c cdl\excite.cdl
+python cdl_summary.py --part=c cdl\excite.cdl
 
 Warning: PRG ROM size not specified, guessing 16 KiB.
 ROM bank 000, CPU address 0000-0def, length 0df0: rendered
