@@ -61,8 +61,8 @@ Note: CPU/PPU origin address plus ROM bank size must not exceed 64 KiB for PRG R
 
 ## The structure of a `.cdl` file
 A `.cdl` file consists of two parts:
-1. PRG ROM log data (16 KiB to 4,080 KiB and a multiple of 16 KiB)
-1. CHR ROM log data (0 bytes to 2,040 KiB and a multiple of 8 KiB)
+1. PRG ROM log data (16 KiB to 4 MiB and a multiple of 16 KiB)
+1. CHR ROM log data (optional; 8 KiB to 2,040 KiB and a multiple of 8 KiB)
 
 See the FCEUX help (Help &rarr; Help&hellip; &rarr; Debug &rarr; Code/Data Logger) for more information on the file format.
 
