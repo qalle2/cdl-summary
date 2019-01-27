@@ -244,8 +244,7 @@ def generate_blocks(handle, settings):
     Notes:
         - a 'chunk' is a bufferful of unprocessed data
         - a 'block' is a sequence of repeating bytes
-    Yield: (address in PRG/CHR ROM, length, value) of one block per call.
-    TODO: split to two parts."""
+    Yield: (address in PRG/CHR ROM, length, value) of one block per call."""
 
     chunkStart = 0     # start address of current chunk in PRG/CHR ROM
     blockStart = None  # start address of current block in PRG/CHR ROM
