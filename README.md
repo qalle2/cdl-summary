@@ -40,7 +40,7 @@ Integer arguments can be decimal (no prefix) or hexadecimal (prefix `0x`; e.g. `
   * Which part to read from *input_file* (case insensitive):
     * `P`: PRG ROM (the default)
     * `C`: CHR ROM
-* `-r` *size*, `--rom-bank-size `*size*
+* `-r` *size*, `--rom-bank-size` *size*
   * Assume the game uses PRG/CHR ROM banks of this size.
   * *size* is the bank size.
   * The size must be a power of two.
