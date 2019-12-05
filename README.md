@@ -22,7 +22,7 @@ Syntax: [*options*] *input_file*
 * `-u`, `--omit-unaccessed`
   * Exclude unaccessed blocks from the output.
 * `--csv`
-  * Output in machine-readable format (CSV, decimal integers separated by commas).
+  * Output in machine-readable format (CSV).
 
 #### Other options
 Integer arguments can be decimal (no prefix) or hexadecimal (prefix `0x`; e.g. `0x100` = 256).
@@ -44,26 +44,15 @@ Integer arguments can be decimal (no prefix) or hexadecimal (prefix `0x`; e.g. `
   * Assume the game uses PRG/CHR ROM banks of this size.
   * *size* is the bank size.
   * The size must be a power of two.
-  * Values for PRG ROM (the maximum value is the default):
-    * `0x1000` (4,096)
-	* `0x2000` (8,192)
-	* `0x4000` (16,384)
-	* `0x8000` (32,768; only if the PRG ROM size is a multiple of it)
-  * Values for CHR ROM:
-    * `0x1000` (4,096)
-	* `0x2000` (8,192; the default)
-* `-o` *address*, `--origin` *address*
+  * Values for PRG ROM: `0x1000`, `0x2000`, `0x4000`, `0x8000` (only if the PRG ROM size is a multiple of it)
+    * the maximum value is the default
+  * Values for CHR ROM:, `0x1000`, `0x2000` (the default)
+* `--origin` *address*
   * Assume each ROM bank starts from this CPU/PPU address.
-  * Values for PRG ROM:
-    * minimum: `0x8000` (32,768)
-    * default: `0x10000` (65,536) minus the ROM bank size
-	* maximum: `0xff00` (65,280)
-  * Values for CHR ROM:
-    * minimum: `0`
-    * default: `0x2000` (8,192) minus the ROM bank size
-	* maximum: `0x1f00` (7,936)
-
-Note: CPU/PPU origin address plus ROM bank size must not exceed 64 KiB for PRG ROM or 8 KiB for CHR ROM.
+  * Values for PRG ROM: `0x8000`, `0x9000`, `0xa000`, `0xb000`, `0xc000`, `0xd000`, `0xe000`, `0xf000`
+	* not greater than `0x10000` minus the ROM bank size
+	* the maximum value is the default
+  * Values for CHR ROM: `0` (the default), `0x1000` (only if the ROM bank size is `0x1000`)
 
 ### *input_file*
   * The Code/Data Logger file to read.
@@ -76,7 +65,7 @@ Note: CPU/PPU origin address plus ROM bank size must not exceed 64 KiB for PRG R
 1. Find the iNES ROM file (extension `.nes`) that was used to create the `.cdl` file.
 1. Open the `.nes` file in FCEUX.
 1. Go to Help &rarr; Message Log.
-1. You should see something like `PRG ROM: 2 x 16KiB` where `2` is the PRG ROM size in 16-KiB banks.
+1. You should see something like `PRG ROM: 2 x 16KiB` where `2` is the PRG ROM size in 16-KiB units.
 
 ## Output
 The program prints the contents of the PRG ROM or CHR ROM part of the CDL file as blocks (runs of same or similar bytes, depending on settings). Each line represents a block.
