@@ -6,7 +6,12 @@ import os
 import sys
 
 def parse_integer(value, min_, max_, description):
-    """Parse integer from command line arguments."""
+    """Parse a string from command line arguments as an integer and validate it.
+    value: string to parse&validate
+    min_: minimum value or None
+    max_: maximum value or None
+    description: for the error message
+    return: parsed value"""
 
     try:
         value = int(value, 0)
@@ -18,82 +23,107 @@ def parse_integer(value, min_, max_, description):
         sys.exit("Invalid command line integer argument: " + description)
     return value
 
-def get_source_size(source):
-    """Get source file size."""
+def get_source_size(handle):
+    """Get the size of the CDL file.
+    handle: file handle
+    return: file size in 8-KiB units"""
 
-    if not os.path.isfile(source):
+    if not os.path.isfile(handle):
         sys.exit("Input file not found.")
     try:
-        fileSize = os.path.getsize(source)
+        fileSize = os.path.getsize(handle)
     except OSError:
         sys.exit("Error getting input file size.")
-    # get size in CHR banks (1 PRG bank = 2 CHR banks)
-    (CHRBankCount, remainder) = divmod(fileSize, 0x2000)
-    # must be (1 PRG bank + 0 CHR banks) to (256 PRG banks + 255 CHR banks)
-    if remainder or not 2 <= CHRBankCount <= 256 * 2 + 255:
+    # get size in 8-KiB units
+    (fileSize8KiB, remainder) = divmod(fileSize, 0x2000)
+    # the size must be a multiple of 8 KiB
+    # and from 16 KiB (16 KiB PRG + 0 KiB CHR) to 6136 KiB (4096 KiB PRG + 2040 KiB CHR)
+    if remainder or not 2 <= fileSize8KiB <= 767:
         sys.exit("Invalid input file size.")
-    return fileSize
+    return fileSize8KiB
 
-def get_PRG_ROM_bank_count(bankCnt, fileSize):
-    """Parse and validate PRG ROM bank count (string/None) from command line arguments."""
+def guess_PRG_ROM_size(fileSize8KiB):
+    """Guess the size of the PRG ROM part of the CDL file.
+    fileSize8KiB: CDL file size in 8-KiB units (2-767)
+    return: PRG ROM size in 16-KiB units (1-256)"""
 
-    # get minimum and maximum bank counts (too small a PRG ROM would result in too large a CHR ROM)
-    min_ = max(1, math.ceil((fileSize - 255 * 0x2000) / 0x4000))
-    max_ = min(256, fileSize // 0x4000)
-    if bankCnt is not None:
-        # validate
-        return parse_integer(bankCnt, min_, max_, "number of PRG ROM banks")
+    if fileSize8KiB in (2, 512):
+        return fileSize8KiB // 2
+    # the largest power of two that's smaller than the file size
+    return 2 ** (math.ceil(math.log2(fileSize8KiB)) - 2)
+
+def get_PRG_ROM_size(PRGSize16KiB, fileSize8KiB):
+    """Get the size of the PRG ROM part of the CDL file from the command line argument or guess it.
+    PRGSize16KiB: PRG ROM size in 16-KiB units (string) or None (will be guessed)
+    fileSize8KiB: CDL file size in 8-KiB units
+    return: PRG ROM size in 16-KiB units"""
+
+    # get minimum and maximum PRG ROM size from file size (in 16-KiB units; too small a PRG ROM
+    # would result in a CHR ROM larger than 255 * 8 KiB)
+    PRGSize16KiBMin = max(1, (fileSize8KiB - 254) // 2)
+    PRGSize16KiBMax = min(256, fileSize8KiB // 2)
+    assert 0 <= fileSize8KiB - PRGSize16KiBMax * 2 <= fileSize8KiB - PRGSize16KiBMin * 2 <= 255
+    if PRGSize16KiB is not None:
+        # parse&validate
+        return parse_integer(PRGSize16KiB, PRGSize16KiBMin, PRGSize16KiBMax, "PRG ROM size")
     # guess
-    if fileSize in (0x4000, 256 * 0x4000):
-        # exceptions to the formula below
-        bankCnt = fileSize // 0x4000
+    PRGSize16KiB = guess_PRG_ROM_size(fileSize8KiB)
+    assert PRGSize16KiBMin <= PRGSize16KiB <= PRGSize16KiBMax
+    print(f"Guessing PRG ROM size: {PRGSize16KiB:d} * 16 KiB")
+    return PRGSize16KiB
+
+def get_ROM_bank_size(bankSize, part, PRGSize16KiB):
+    """Get the size of ROM banks the from command line argument or guess it.
+    bankSize: ROM bank size (string) or None (will be guessed)
+    part: part of the CDL file to read
+    PRGSize16KiB: PRG ROM size in 16-KiB units"""
+
+    if part == "P":
+        # 32 KiB if a multiple of it, otherwise 16 KiB
+        maxBankSize = 0x4000 if PRGSize16KiB % 2 else 0x8000
     else:
-        # the largest power of two that's smaller than the file size
-        bankCnt = 2 ** (math.ceil(math.log2(fileSize / 0x4000)) - 1)
-    assert min_ <= bankCnt <= max_
-    print("Guessing PRG ROM bank count: {:d}".format(bankCnt))
-    return bankCnt
-
-def get_ROM_bank_size(bankSize, part, PRGBankCnt):
-    """Parse and validate ROM bank size (string/None) from command line arguments."""
-
+        maxBankSize = 0x2000  # 8 KiB
     if bankSize is not None:
-        return parse_integer(bankSize, 0x100, 0x8000 if part == "P" else 0x2000, "ROM bank size")
-    # guess
-    bankSize = min(PRGBankCnt * 0x4000, 0x8000) if part == "P" else 0x2000
-    print("Guessing ROM bank size: 0x{:04x}".format(bankSize))
+        # parse&validate
+        bankSize = parse_integer(bankSize, 0x1000, maxBankSize, "ROM bank size")
+        if bankSize not in (0x1000, 0x2000, 0x4000, 0x8000):
+            sys.exit("ROM bank size must be a power of two.")
+    else:
+        # guess
+        bankSize = maxBankSize
+        print(f"Guessing ROM bank size: 0x{bankSize:04x}")
     return bankSize
 
 def get_origin(origin, part, bankSize):
     """Parse and validate CPU/PPU origin address (string/None) from command line arguments."""
 
     if origin is not None:
-        # validate
+        # parse&validate
         min_ = 0x8000 if part == "P" else 0
         max_ = 0x10000 - bankSize if part == "P" else 0x2000 - bankSize
         return parse_integer(origin, min_, max_, "CPU/PPU origin address")
     # guess
     origin = 0x10000 - bankSize if part == "P" else 0
-    print("Guessing {:s} origin address: 0x{:04x}".format(
-        "CPU" if part == "P" else "PPU", origin
-    ))
+    print("Guessing {:s} origin address: 0x{:04x}".format("CPU" if part == "P" else "PPU", origin))
     return origin
 
 def parse_arguments():
     """Parse command line arguments using getopt."""
 
-    shortOpts = "b:p:umr:o:c"
+    shortOpts = "g:p:r:o:muc"
     longOpts = (
-        "cpu-origin-address=",
-        "csv",
-        "ignore-cpu-bank",
-        "ignore-directness",
+        # switches
         "ignore-method",
+        "ignore-directness",
         "ignore-pcm",
+        "ignore-cpu-bank",
         "omit-unaccessed",
+        "csv",
+        # other options
+        "prg-rom-size=",
         "part=",
-        "prg-rom-banks=",
         "rom-bank-size=",
+        "origin=",
     )
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], shortOpts, longOpts)
@@ -110,32 +140,35 @@ def parse_arguments():
     if len(args) != 1:
         sys.exit("Invalid number of command line arguments.")
     source = args[0]
-    fileSize = get_source_size(source)
+    fileSize8KiB = get_source_size(source)
 
     # PRG ROM size
-    PRGBankCnt = get_PRG_ROM_bank_count(opts.get("--prg-rom-banks", opts.get("-b")), fileSize)
-    PRGSize = PRGBankCnt * 0x4000
-    if part == "C" and PRGSize == fileSize:
+    PRGSize16KiB = get_PRG_ROM_size(opts.get("--prg-rom-size", opts.get("-g")), fileSize8KiB)
+    PRGSize = PRGSize16KiB * 0x4000
+    if part == "C" and fileSize8KiB == PRGSize16KiB * 2:
         sys.exit("No CHR ROM.")
 
     # ROM bank size
-    bankSize = get_ROM_bank_size(opts.get("--rom-bank-size", opts.get("-r")), part, PRGBankCnt)
+    bankSize = get_ROM_bank_size(opts.get("--rom-bank-size", opts.get("-r")), part, PRGSize16KiB)
 
     # CPU/PPU origin address
     origin = get_origin(opts.get("--origin", opts.get("-o")), part, bankSize)
 
     return {
-        "origin": origin,
-        "CSVOutput": "-c" in opts or "--csv" in opts,
-        "ignoreCPUBank": "--ignore-cpu-bank" in opts,
-        "ignoreDirectness": "--ignore-directness" in opts,
+        # switches
         "ignoreMethod": "-m" in opts or "--ignore-method" in opts,
+        "ignoreDirectness": "--ignore-directness" in opts,
         "ignorePCM": "--ignore-pcm" in opts,
+        "ignoreCPUBank": "--ignore-cpu-bank" in opts,
         "omitUnaccessed": "-u" in opts or "--omit-unaccessed" in opts,
+        "CSVOutput": "-c" in opts or "--csv" in opts,
+        # other options
         "part": part,
-        "partSize": PRGSize if part == "P" else fileSize - PRGSize,
+        "partSize": PRGSize if part == "P" else fileSize8KiB * 0x2000 - PRGSize,
         "partStart": 0 if part == "P" else PRGSize,
         "bankSize": bankSize,
+        "origin": origin,
+        # required argument
         "source": source,
     }
 
@@ -162,6 +195,24 @@ def validate_CDL_data(handle, settings):
                 ))
         chunkAddr += len(chunk)
 
+def get_ignore_mask(settings):
+    """Create an AND bitmask for clearing unwanted bits in each CDL byte."""
+
+    if settings["part"] == "P":
+        # PRG ROM
+        mask = 0b0111_1111  # unused bits
+        if settings["ignorePCM"]:
+            mask &= 0b1011_1111
+        if settings["ignoreDirectness"]:
+            mask &= 0b1100_1111
+        if settings["ignoreCPUBank"] or settings["bankSize"] == 0x8000:
+            mask &= 0b1111_0011
+        elif settings["bankSize"] == 0x4000:
+            mask &= 0b1111_1011
+        return mask
+    # CHR ROM
+    return 0b0000_0011  # unused bits
+
 def generate_blocks(handle, settings):
     """Read the PRG ROM or the CHR ROM part from a CDL file.
     Notes:
@@ -173,37 +224,18 @@ def generate_blocks(handle, settings):
     blockStart = None  # start address of current block in PRG/CHR ROM
     blockByte = None   # current repeating byte value
 
-    # which bits to ignore (clear) in each PRG data byte
-    if settings["part"] == "P":
-        # PRG ROM
-        ignoreMask = 0b0111_1111  # unused bits
-        if settings["ignorePCM"]:
-            ignoreMask &= 0b1011_1111
-        if settings["ignoreDirectness"]:
-            ignoreMask &= 0b1100_1111
-        if settings["ignoreCPUBank"] or settings["bankSize"] == 0x8000:
-            ignoreMask &= 0b1111_0011
-        elif settings["bankSize"] == 0x4000:
-            ignoreMask &= 0b1111_1011
-    else:
-        # CHR ROM
-        ignoreMask = 0b0000_0011  # unused bits
+    ignoreMask = get_ignore_mask(settings)
 
     for chunk in read_file(handle, settings["partStart"], settings["partSize"]):
         for (pos, byte) in enumerate(chunk):
             byte &= ignoreMask
             if settings["ignoreMethod"]:
                 byte = int(bool(byte))  # any nonzero value -> 1
-
             if blockByte is None or byte != blockByte or pos % settings["bankSize"] == 0:
-                # end current block
                 if blockByte is not None:
+                    # end current block
                     if blockByte or not settings["omitUnaccessed"]:
-                        yield (
-                            blockStart,
-                            chunkStart + pos - blockStart,
-                            blockByte
-                        )
+                        yield (blockStart, chunkStart + pos - blockStart, blockByte)
                 # start new block
                 blockStart = chunkStart + pos
                 blockByte = byte
@@ -214,21 +246,20 @@ def generate_blocks(handle, settings):
         # end last block
         yield (blockStart, settings["partSize"] - blockStart, blockByte)
 
-def format_address(addr, settings):
+def convert_address(addr, settings):
     """addr: address in the PRG/CHR ROM part of a CDL file
-    return: (ROM bank, CPU/PPU address)"""
+    return: (bank, offset, NES address)"""
 
-    (ROMBank, CPUBankOffset) = divmod(addr, settings["bankSize"])
-    return (ROMBank, settings["origin"] + CPUBankOffset)
+    (bank, offset) = divmod(addr, settings["bankSize"])
+    return (bank, offset, settings["origin"] + offset)
 
 def PRG_byte_description(byte, settings):
     """Describe a PRG CDL byte."""
 
-    if settings["ignoreMethod"] and byte:
-        return "accessed"
+    if settings["ignoreMethod"]:
+        return "accessed" if byte else "unaccessed"
 
     items = []
-
     if byte & 0b0000_0001:
         # code
         if byte & 0b0001_0000:
@@ -245,12 +276,12 @@ def PRG_byte_description(byte, settings):
             items.append("data (PCM audio)")
         else:
             items.append("data")
-
+    # CPU bank
     if items and settings["bankSize"] < settings["partSize"] and not settings["ignoreCPUBank"]:
-        CPUBankStart = 0x8000 + ((byte >> 2) & 0b11) * 0x2000
-        CPUBankSize = max(settings["bankSize"], 0x2000)
+        bankStart = 0x8000 + ((byte & 0b0000_1100) >> 2) * 0x2000
+        bankSize = max(settings["bankSize"], 0x2000)
         items.append("last mapped to CPU bank 0x{:04x}-0x{:04x}".format(
-            CPUBankStart, CPUBankStart + CPUBankSize - 1
+            bankStart, bankStart + bankSize - 1
         ))
 
     return ", ".join(items) if items else "unaccessed"
@@ -271,24 +302,30 @@ def CHR_byte_description(byte, settings):
 def normal_output(handle, settings):
     """Print output in human-readable format."""
 
+    byteDescriptionFn = PRG_byte_description if settings["part"] == "P" else CHR_byte_description
+    partDescr = "PRG" if settings["part"] == "P" else "CHR"
+    chip = "CPU" if settings["part"] == "P" else "PPU"
     for (addr, length, byte) in generate_blocks(handle, settings):
-        (ROMBank, CPUAddr) = format_address(addr, settings)
-        CPUAddrEnd = CPUAddr + length - 1
-        if settings["part"] == "P":
-            descr = PRG_byte_description(byte, settings)
-        else:
-            descr = CHR_byte_description(byte, settings)
-        print("ROM bank {:03x}, {:s} address {:04x}-{:04x} (length {:4x}): {:s}".format(
-            ROMBank, "CPU" if settings["part"] == "P" else "PPU", CPUAddr, CPUAddrEnd, length, descr
-        ))
+        (bank, offset, NESAddr) = convert_address(addr, settings)
+        descr = byteDescriptionFn(byte, settings)
+        print(
+            "{:s} {:06x}-{:06x}, bank {:03x}, off {:04x}-{:04x}, {:s} {:04x}-{:04x}, len {:04x}: "
+            "{:s}".format(
+                partDescr, addr, addr + length - 1,  # PRG/CHR ROM address range
+                bank, offset, offset + length - 1,  # ROM bank and address range within it
+                chip, NESAddr, NESAddr + length - 1,  # CPU/PPU address range
+                length, descr
+            )
+        )
 
 def CSV_output(handle, settings):
     """Print output in CSV (machine-readable) format."""
 
-    print('"ROM bank","CPU/PPU address","length","CDL byte"')
+    byteDescriptionFn = PRG_byte_description if settings["part"] == "P" else CHR_byte_description
     for (addr, length, byte) in generate_blocks(handle, settings):
-        (ROMBank, CPUAddr) = format_address(addr, settings)
-        print(",".join(str(n) for n in (ROMBank, CPUAddr, length, byte)))
+        (bank, offset, NESAddr) = convert_address(addr, settings)
+        descr = byteDescriptionFn(byte, settings)
+        print(",".join(str(n) for n in (addr, bank, offset, NESAddr, length, byte, f'"{descr:s}"')))
 
 def main():
     """The main function."""
