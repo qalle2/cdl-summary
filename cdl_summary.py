@@ -113,7 +113,7 @@ def get_origin(origin, part, bankSize):
 def parse_arguments():
     """Parse command line arguments using getopt."""
 
-    shortOpts = "g:p:r:o:muc"
+    shortOpts = "mdabucg:p:r:o:"
     longOpts = (
         # switches
         "ignore-method",
@@ -160,9 +160,9 @@ def parse_arguments():
     return {
         # switches
         "ignoreMethod": "-m" in opts or "--ignore-method" in opts,
-        "ignoreDirectness": "--ignore-directness" in opts,
-        "ignorePCM": "--ignore-pcm" in opts,
-        "ignoreCPUBank": "--ignore-cpu-bank" in opts,
+        "ignoreDirectness": "-d" in opts or "--ignore-directness" in opts,
+        "ignorePCM": "-a" in opts or "--ignore-pcm" in opts,
+        "ignoreCPUBank": "-b" in opts or "--ignore-cpu-bank" in opts,
         "omitUnaccessed": "-u" in opts or "--omit-unaccessed" in opts,
         "CSVOutput": "-c" in opts or "--csv" in opts,
         # other options
