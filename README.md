@@ -20,11 +20,16 @@ Integer arguments can be decimal (no prefix) or hexadecimal (prefix `0x`; e.g. `
 * `-u`, `--omit-unaccessed`
   * Exclude unaccessed blocks from the output.
 * `-m`, `--ignore-method`
-  * Do not care whether blocks were accessed as PCM data, nor whether they were accessed indirectly or directly.
-  * Only affects the PRG ROM part.
-* `-n`, `--ignore-cpu-bank`
-  * Do not care which CPU bank the bytes was mapped to when last accessed.
-  * Only affects the PRG ROM part.
+  * Only care whether bytes were accessed, not how.
+* `--ignore-directness`
+  * Do not care whether PRG ROM bytes were accessed directly or indirectly.
+  * Has no effect with CHR ROM or `--ignore-method`
+* `--ignore-pcm`
+  * Do not care whether PRG ROM bytes were accessed as PCM data.
+  * Has no effect with CHR ROM or `--ignore-method`
+* `--ignore-cpu-bank`
+  * Do not care which CPU bank PRG ROM bytes were mapped to when last accessed.
+  * Has no effect with CHR ROM or `--ignore-method`
 * `-r` *size*, `--rom-bank-size `*size*
   * Assume the game uses PRG/CHR ROM banks of this size.
   * *size* is the bank size.
