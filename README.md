@@ -103,25 +103,5 @@ ROM bank 000, CPU address 1230-123f, length 0010: unaccessed
 (snip)
 ```
 
-## CDL file format description
-(From FCEUX help; reformatted by me.)
-
-CDL files are just a mask of the ROM; that is, they are of the same size as the ROM, and each byte represents the corresponding byte of the ROM. The format of each byte is like so (in binary):
-
-For PRG ROM: `xPdcAADC`
-* `C` = Whether it was accessed as code.
-* `D` = Whether it was accessed as data.
-* `AA` = Into which ROM bank it was mapped when last accessed:
-  * `00` = `$8000`&ndash;`$9FFF`
-  * `01` = `$A000`&ndash;`$BFFF`
-  * `10` = `$C000`&ndash;`$DFFF`
-  * `11` = `$E000`&ndash;`$FFFF`
-* `c` = Whether indirectly accessed as code. (e.g. as the destination of a `JMP ($nnnn)` instruction)
-* `d` = Whether indirectly accessed as data. (e.g. as the destination of an `LDA ($nn),Y` instruction)
-* `P` = If logged as PCM audio data.
-* `x` = unused.
-
-For CHR ROM: `xxxxxxRD`
-* `D` = Whether it was drawn on screen (rendered by PPU at runtime)
-* `R` = Whether it was read programmatically using port `$2007` (e.g. `Argus_(J).nes` checks if the bankswitching works by reading the same byte of CHR data before and after switching)
-* `x` = unused.
+## References
+* [FCEUX Help &ndash; Code/Data Logger](http://www.fceux.com/web/help/fceux.html?CodeDataLogger.html) (contains a description of the CDL file format)
