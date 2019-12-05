@@ -82,12 +82,14 @@ def get_origin(origin, part, bankSize):
 def parse_arguments():
     """Parse command line arguments using getopt."""
 
-    shortOpts = "b:p:umnr:o:c"
+    shortOpts = "b:p:umr:o:c"
     longOpts = (
         "cpu-origin-address=",
         "csv",
         "ignore-cpu-bank",
+        "ignore-directness",
         "ignore-method",
+        "ignore-pcm",
         "omit-unaccessed",
         "part=",
         "prg-rom-banks=",
@@ -125,8 +127,10 @@ def parse_arguments():
     return {
         "origin": origin,
         "CSVOutput": "-c" in opts or "--csv" in opts,
-        "ignoreCPUBank": "-n" in opts or "--ignore-cpu-bank" in opts,
+        "ignoreCPUBank": "--ignore-cpu-bank" in opts,
+        "ignoreDirectness": "--ignore-directness" in opts,
         "ignoreMethod": "-m" in opts or "--ignore-method" in opts,
+        "ignorePCM": "--ignore-pcm" in opts,
         "omitUnaccessed": "-u" in opts or "--omit-unaccessed" in opts,
         "part": part,
         "partSize": PRGSize if part == "P" else fileSize - PRGSize,
@@ -169,25 +173,29 @@ def generate_blocks(handle, settings):
     blockStart = None  # start address of current block in PRG/CHR ROM
     blockByte = None   # current repeating byte value
 
-    # which bits to ignore (clear) in each byte
+    # which bits to ignore (clear) in each PRG data byte
     if settings["part"] == "P":
-        ignoreMask = 0b1111_1111
-        if settings["ignoreMethod"]:
-            ignoreMask &= 0b1000_1111
-
+        # PRG ROM
+        ignoreMask = 0b0111_1111  # unused bits
+        if settings["ignorePCM"]:
+            ignoreMask &= 0b1011_1111
+        if settings["ignoreDirectness"]:
+            ignoreMask &= 0b1100_1111
         if settings["ignoreCPUBank"] or settings["bankSize"] == 0x8000:
             ignoreMask &= 0b1111_0011
         elif settings["bankSize"] == 0x4000:
             ignoreMask &= 0b1111_1011
     else:
-        ignoreMask = 0b1111_1111
+        # CHR ROM
+        ignoreMask = 0b0000_0011  # unused bits
 
     for chunk in read_file(handle, settings["partStart"], settings["partSize"]):
         for (pos, byte) in enumerate(chunk):
             byte &= ignoreMask
+            if settings["ignoreMethod"]:
+                byte = int(bool(byte))  # any nonzero value -> 1
 
-            if blockByte is None or byte != blockByte \
-            or pos % settings["bankSize"] == 0:
+            if blockByte is None or byte != blockByte or pos % settings["bankSize"] == 0:
                 # end current block
                 if blockByte is not None:
                     if blockByte or not settings["omitUnaccessed"]:
@@ -216,10 +224,11 @@ def format_address(addr, settings):
 def PRG_byte_description(byte, settings):
     """Describe a PRG CDL byte."""
 
-    if byte == 0b0000_0000:
-        return "unaccessed"
+    if settings["ignoreMethod"] and byte:
+        return "accessed"
 
     items = []
+
     if byte & 0b0000_0001:
         # code
         if byte & 0b0001_0000:
@@ -237,19 +246,20 @@ def PRG_byte_description(byte, settings):
         else:
             items.append("data")
 
-    if settings["bankSize"] < min(0x8000, settings["partSize"]) \
-    and not settings["ignoreCPUBank"]:
+    if items and settings["bankSize"] < settings["partSize"] and not settings["ignoreCPUBank"]:
         CPUBankStart = 0x8000 + ((byte >> 2) & 0b11) * 0x2000
         CPUBankSize = max(settings["bankSize"], 0x2000)
         items.append("last mapped to CPU bank 0x{:04x}-0x{:04x}".format(
             CPUBankStart, CPUBankStart + CPUBankSize - 1
         ))
 
-    return ", ".join(items)
+    return ", ".join(items) if items else "unaccessed"
 
-def CHR_byte_description(byte):
+def CHR_byte_description(byte, settings):
     """Describe a CHR CDL byte."""
 
+    if settings["ignoreMethod"] and byte:
+        return "accessed"
     if byte & 0b0000_0011 == 0b0000_0011:
         return "read programmatically & rendered"
     if byte & 0b0000_0010:
@@ -264,12 +274,10 @@ def normal_output(handle, settings):
     for (addr, length, byte) in generate_blocks(handle, settings):
         (ROMBank, CPUAddr) = format_address(addr, settings)
         CPUAddrEnd = CPUAddr + length - 1
-
         if settings["part"] == "P":
             descr = PRG_byte_description(byte, settings)
         else:
-            descr = CHR_byte_description(byte)
-
+            descr = CHR_byte_description(byte, settings)
         print("ROM bank {:03x}, {:s} address {:04x}-{:04x} (length {:4x}): {:s}".format(
             ROMBank, "CPU" if settings["part"] == "P" else "PPU", CPUAddr, CPUAddrEnd, length, descr
         ))
@@ -278,21 +286,17 @@ def CSV_output(handle, settings):
     """Print output in CSV (machine-readable) format."""
 
     print('"ROM bank","CPU/PPU address","length","CDL byte"')
-
     for (addr, length, byte) in generate_blocks(handle, settings):
         (ROMBank, CPUAddr) = format_address(addr, settings)
-
         print(",".join(str(n) for n in (ROMBank, CPUAddr, length, byte)))
 
 def main():
     """The main function."""
 
     settings = parse_arguments()
-
     try:
         with open(settings["source"], "rb") as handle:
             validate_CDL_data(handle, settings)
-
             if settings["CSVOutput"]:
                 CSV_output(handle, settings)
             else:
