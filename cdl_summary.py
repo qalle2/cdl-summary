@@ -265,14 +265,13 @@ def PRG_byte_description(byte, settings):
             items.append("data (PCM audio)")
         else:
             items.append("data")
-    # CPU bank
-    if items and settings["bankSize"] < settings["partSize"] and not settings["ignoreCPUBank"]:
+    # CPU bank (only for accessed bytes)
+    if byte and settings["bankSize"] < 0x8000 and not settings["ignoreCPUBank"]:
         bankStart = 0x8000 + ((byte & 0b0000_1100) >> 2) * 0x2000
         bankSize = max(settings["bankSize"], 0x2000)
         items.append("last mapped to CPU bank 0x{:04x}-0x{:04x}".format(
             bankStart, bankStart + bankSize - 1
         ))
-
     return ", ".join(items) if items else "unaccessed"
 
 def CHR_byte_description(byte, settings):
