@@ -6,6 +6,8 @@ Reads an [FCEUX](http://www.fceux.com) Code/Data Logger file (extension `.cdl`) 
 Syntax: [*options*] *input_file*
 
 ### *options*
+Integer arguments can be decimal (no prefix) or hexadecimal (prefix `0x`; e.g. `0x100` = 256).
+
 * `-b` *size* or `--prg-rom-banks`=*size*
   * *size* is the PRG ROM size of *input_file* in 16-KiB (16,384-byte) banks.
   * *size* must be 1 to 256.
@@ -24,23 +26,26 @@ Syntax: [*options*] *input_file*
   * Do not care which CPU bank the bytes were mapped to when last accessed.
   * Only affects the PRG ROM part.
 * `--rom-bank-size=`*size*
-  * Assume the game uses ROM banks of this size.
-  * *size* is the bank size in hexadecimal.
-  * If the PRG ROM part is being examined:
-    * valid values: `1000`, `2000`, `4000`, `8000`
-    * default value: PRG ROM size or `8000`, whichever is smaller
-  * If the CHR ROM part is being examined:
-    * valid values: `400`, `800`, `1000`, `2000`
-    * default value: `2000`
-* `--cpu-origin-address=`*address*
+  * Assume the game uses PRG/CHR ROM banks of this size.
+  * *size* is the bank size.
+  * values for PRG ROM:
+    * minimum: `0x100` (256)
+    * default: PRG ROM size or `0x8000` (32,768), whichever is smaller
+	* maximum: `0x8000` (32,768)
+  * values for CHR ROM:
+    * minimum: `0x100` (256)
+	* default: `0x2000` (8,192)
+	* maximum: `0x2000` (8,192)
+* `--origin *address*
   * Assume each ROM bank starts from this CPU/PPU address.
-  * *address* is the origin address in hexadecimal.
-  * If the PRG ROM part is being examined:
-    * valid values: `8000`&hellip;`fc00` and a multiple of `400`
-    * default: `10000` minus the ROM bank size
-  * If the CHR ROM part is being examined:
-    * valid values: `0000`&hellip;`1c00` and a multiple of `400`
-    * default: `0000`
+  * values for PRG ROM:
+    * minimum: `0x8000` (32,768)
+	* maximum: `0xff00` (65,280)
+    * default: `0x10000` minus the ROM bank size
+  * values for CHR ROM:
+    * minimum: `0`
+	* maximum: `0x1f00` (7,936)
+    * default: `0`
 * `--csv`
   * Output in machine-readable format (CSV, decimal integers separated by commas).
 
