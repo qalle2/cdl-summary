@@ -101,7 +101,10 @@ def get_origin(origin, part, bankSize):
         # parse&validate
         min_ = 0x8000 if part == "P" else 0
         max_ = 0x10000 - bankSize if part == "P" else 0x2000 - bankSize
-        return parse_integer(origin, min_, max_, "CPU/PPU origin address")
+        origin = parse_integer(origin, min_, max_, "CPU/PPU origin address")
+        if origin % 0x1000:
+            sys.exit("Origin must be a multiple of 0x1000.")
+        return origin
     # guess
     origin = 0x10000 - bankSize if part == "P" else 0
     print("Guessing {:s} origin address: 0x{:04x}".format("CPU" if part == "P" else "PPU", origin))
@@ -180,20 +183,6 @@ def read_file(handle, start, bytesLeft):
         chunkSize = min(bytesLeft, 2 ** 20)
         yield handle.read(chunkSize)
         bytesLeft -= chunkSize
-
-def validate_CDL_data(handle, settings):
-    """Validate bytes in the PRG/CHR ROM part in a CDL file. Exit on error."""
-
-    validationMask = 0b1000_0000 if settings["part"] == "P" else 0b1111_1100
-    chunkAddr = settings["partStart"]
-
-    for chunk in read_file(handle, settings["partStart"], settings["partSize"]):
-        for (pos, byte) in enumerate(chunk):
-            if byte & validationMask:
-                sys.exit("Error: invalid byte at 0x{:06x}: 0x{:02x}".format(
-                    chunkAddr + pos, byte
-                ))
-        chunkAddr += len(chunk)
 
 def get_ignore_mask(settings):
     """Create an AND bitmask for clearing unwanted bits in each CDL byte."""
@@ -333,7 +322,6 @@ def main():
     settings = parse_arguments()
     try:
         with open(settings["source"], "rb") as handle:
-            validate_CDL_data(handle, settings)
             if settings["CSVOutput"]:
                 CSV_output(handle, settings)
             else:
