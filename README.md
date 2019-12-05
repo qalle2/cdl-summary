@@ -10,18 +10,18 @@ Syntax: [*options*] *input_file*
 #### Switches
 * `-m`, `--ignore-method`
   * Don't care about how bytes were accessed.
-* `--ignore-directness`
+* `-d`, `--ignore-directness`
   * Do not care whether PRG ROM bytes were accessed directly or indirectly.
   * Has no effect with CHR ROM or `--ignore-method`
-* `--ignore-pcm`
+* `-a`, `--ignore-pcm`
   * Do not care whether PRG ROM bytes were accessed as PCM data.
   * Has no effect with CHR ROM or `--ignore-method`
-* `--ignore-cpu-bank`
+* `-b`, `--ignore-cpu-bank`
   * Do not care which CPU bank PRG ROM bytes were mapped to when last accessed.
   * Has no effect with CHR ROM or `--ignore-method`
 * `-u`, `--omit-unaccessed`
   * Exclude unaccessed blocks from the output.
-* `--csv`
+* `-c`, `--csv`
   * Output in machine-readable format (CSV).
 
 #### Other options
@@ -47,7 +47,7 @@ Integer arguments can be decimal (no prefix) or hexadecimal (prefix `0x`; e.g. `
   * Values for PRG ROM: `0x1000`, `0x2000`, `0x4000`, `0x8000` (only if the PRG ROM size is a multiple of it)
     * the maximum value is the default
   * Values for CHR ROM:, `0x1000`, `0x2000` (the default)
-* `--origin` *address*
+* `-o` *address*, `--origin` *address*
   * Assume each ROM bank starts from this CPU/PPU address.
   * Values for PRG ROM: `0x8000`, `0x9000`, `0xa000`, `0xb000`, `0xc000`, `0xd000`, `0xe000`, `0xf000`
 	* not greater than `0x10000` minus the ROM bank size
