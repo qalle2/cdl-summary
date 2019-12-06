@@ -318,6 +318,9 @@ def CSV_output(handle, settings):
 def main():
     """The main function."""
 
+    if sys.version_info[0] != 3:
+        print("Warning: possibly incompatible Python version.", file=sys.stderr)
+
     settings = parse_arguments()
     try:
         with open(settings["source"], "rb") as handle:
