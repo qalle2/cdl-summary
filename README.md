@@ -1,6 +1,8 @@
 # cdl-summary
 ```
-usage: cdl_summary.py [-h] -r PRG_SIZE -p {p,c} -o {0,1,2,3,4,5,6,7,32,40,48,56} -b {1,2,4,8,16,32} input_file
+usage: cdl_summary.py [-h] -r PRG_SIZE -p {p,c} -o {0,1,2,3,4,5,6,7,32,40,48,56} -b
+                      {1,2,4,8,16,32}
+                      input_file
 
 Print an FCEUX Code/Data Logger file (.cdl) in human-readable format. All options are required.
 
@@ -10,21 +12,21 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -r PRG_SIZE, --prg-size PRG_SIZE
-                        The PRG ROM size of the input file, in KiB (16-4096 and a multiple of 16, usually a power of
-                        two).
+                        PRG ROM size of input file, in KiB (16-4096 and a multiple of 16, usually
+                        a power of two).
   -p {p,c}, --part {p,c}
-                        Which part to read from the input file. p=PRG ROM (default), c=CHR ROM.
+                        Which part to read from input file. p=PRG ROM, c=CHR ROM.
   -o {0,1,2,3,4,5,6,7,32,40,48,56}, --origin {0,1,2,3,4,5,6,7,32,40,48,56}
-                        The CPU/PPU address each ROM bank starts from, in KiB. 32/40/48/56 for PRG ROM, 0-7 for CHR
-                        ROM.
+                        The CPU/PPU address each ROM bank starts from, in KiB. 32/40/48/56 for PRG
+                        ROM, 0-7 for CHR ROM.
   -b {1,2,4,8,16,32}, --bank-size {1,2,4,8,16,32}
-                        Size of PRG/CHR ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8 for CHR ROM. -o plus -b must be
-                        64 or less for PRG ROM and 8 or less for CHR ROM.
+                        Size of PRG/CHR ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8 for CHR
+                        ROM. -o plus -b must be 64 or less for PRG ROM and 8 or less for CHR ROM.
 ```
 
 ## Examples
 ```
-C:\>python cdl_summary.py --prg-size 32 --part p --origin 32 --bank-size 32 smb.cdl
+python3 cdl_summary.py --prg-size 32 --part p --origin 32 --bank-size 32 smb.cdl
 "PRG address","CPU bank","offset in bank","CPU address","block length","CDL byte","description"
 0,0,0,32768,90,1,"code"
 90,0,90,32858,7,2,"data"
@@ -34,11 +36,13 @@ C:\>python cdl_summary.py --prg-size 32 --part p --origin 32 --bank-size 32 smb.
 117,0,117,32885,13,2,"data"
 130,0,130,32898,406,1,"code"
 536,0,536,33304,8,34,"data (indirectly accessed)"
+544,0,544,33312,17,1,"code"
+561,0,561,33329,3,17,"code (indirectly accessed)"
 (snip)
 ```
 
 ```
-C:\>python cdl_summary.py --prg-size 32 --part c --origin 0 --bank-size 8 smb.cdl
+python3 cdl_summary.py --prg-size 32 --part c --origin 0 --bank-size 8 smb.cdl
 "CHR address","PPU bank","offset in bank","PPU address","block length","CDL byte","description"
 0,0,0,0,4336,1,"rendered"
 4336,0,4336,4336,16,0,"unaccessed"
