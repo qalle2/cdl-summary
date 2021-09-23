@@ -28,6 +28,8 @@ optional arguments:
   -v, --verbose         Print extra debug messages.
 ```
 
+There's a sample CDL file in `gamegenie.cdl.gz` (gz compressed).
+
 ## Examples
 PRG ROM:
 ```
