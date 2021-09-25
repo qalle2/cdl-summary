@@ -1,15 +1,15 @@
 import argparse, os, sys
 
 # bitmasks for CDL data bytes; see http://fceux.com/web/help/CodeDataLogger.html
-PRG_PCM_AUDIO     = 0x40
-PRG_INDIRECT_DATA = 0x20
-PRG_INDIRECT_CODE = 0x10
-PRG_CPU_BANK_HI   = 0x08
-PRG_CPU_BANK_LO   = 0x04
-PRG_DATA          = 0x02
-PRG_CODE          = 0x01
-CHR_READ_PROGRAMMATICALLY = 0x02
-CHR_RENDERED              = 0x01
+PRG_PCM_AUDIO     = 1 << 6
+PRG_INDIRECT_DATA = 1 << 5
+PRG_INDIRECT_CODE = 1 << 4
+PRG_CPU_BANK_HI   = 1 << 3
+PRG_CPU_BANK_LO   = 1 << 2
+PRG_DATA          = 1 << 1
+PRG_CODE          = 1 << 0
+CHR_READ_PROGRAMMATICALLY = 1 << 1
+CHR_RENDERED              = 1 << 0
 
 def parse_arguments():
     # parse command line arguments using argparse
@@ -20,12 +20,12 @@ def parse_arguments():
 
     parser.add_argument(
         "-r", "--prg-size", type=int, required=True,
-        help="PRG ROM size of input file, in KiB (16-4096 and a multiple of 16, usually a power of "
-        "two). Required."
+        help="PRG ROM size of input file, in KiB (16-4096 and a multiple of 16, usually a power "
+        "of two). Required."
     )
     parser.add_argument(
         "-p", "--part", choices=("p", "c"), default="p",
-        help="Which part to read from input file. p=PRG ROM (default), c=CHR ROM."
+        help="Which part to read from input file. 'p'=PRG ROM, 'c'=CHR ROM. Default='p'."
     )
     parser.add_argument(
         "-b", "--bank-size", type=int, choices=(1, 2, 4, 8, 16, 32), required=True,
@@ -42,7 +42,9 @@ def parse_arguments():
         help="Ignore how PRG ROM bytes were accessed (directly/indirectly/as PCM audio)."
     )
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Print extra debug messages."
+        "-f", "--output-format", choices={"c", "t"}, default="c",
+        help="Output format. 'c' = CSV (fields separated by commas, numbers in decimal, strings "
+        "quoted); 't'=tabular (constant-width fields, numbers in hexadecimal). Default='c'."
     )
     parser.add_argument(
         "input_file", help="The .cdl file to read. Size: 16-6136 KiB and a multiple of 8 KiB."
@@ -81,6 +83,24 @@ def parse_arguments():
 
     return args
 
+def get_headers(part):
+    # get headers for CSV data or table
+    if part == "p":
+        rom = "PRG"
+        processor = "CPU"
+    else:
+        rom = "CHR"
+        processor = "PPU"
+    return (
+        f"{rom} address",
+        f"{rom}/{processor} bank",
+        f"offset in {rom}/{processor} bank",
+        f"{processor} address",
+        "CDL byte repeat count",
+        "CDL byte",
+        "CDL byte description",
+    )
+
 def get_file_info(fileSize, args):
     # get more info on what to do
 
@@ -107,8 +127,8 @@ def get_file_info(fileSize, args):
             bitmask |= PRG_PCM_AUDIO | PRG_INDIRECT_DATA | PRG_INDIRECT_CODE
         if args.bank_size <= 16:
             bitmask |= PRG_CPU_BANK_HI
-        if args.bank_size == 8:
-            bitmask |= PRG_CPU_BANK_LO
+            if args.bank_size == 8:
+                bitmask |= PRG_CPU_BANK_LO
     else:
         bitmask = CHR_READ_PROGRAMMATICALLY | CHR_RENDERED
 
@@ -155,19 +175,21 @@ def generate_cdl_blocks(handle, fileInfo, args):
 def describe_prg_byte(byte, omitCpuBank, bankSize):
     items = []
 
-    if byte & PRG_INDIRECT_CODE:
-        items.append("code (indirectly accessed)")
-    elif byte & PRG_CODE:
-        items.append("code")
+    if byte & PRG_CODE:
+        if byte & PRG_INDIRECT_CODE:
+            items.append("code (indirectly accessed)")
+        else:
+            items.append("code")
 
-    if byte & PRG_INDIRECT_DATA and byte & PRG_PCM_AUDIO:
-        items.append("data (indirectly accessed & PCM audio)")
-    elif byte & PRG_INDIRECT_DATA:
-        items.append("data (indirectly accessed)")
-    elif byte & PRG_PCM_AUDIO:
-        items.append("data (PCM audio)")
-    elif byte & PRG_DATA:
-        items.append("data")
+    if byte & PRG_DATA:
+        if byte & PRG_INDIRECT_DATA and byte & PRG_PCM_AUDIO:
+            items.append("data (indirectly accessed & PCM audio)")
+        elif byte & PRG_INDIRECT_DATA:
+            items.append("data (indirectly accessed)")
+        elif byte & PRG_PCM_AUDIO:
+            items.append("data (PCM audio)")
+        else:
+            items.append("data")
 
     if byte and not omitCpuBank:
         cpuBankStart = (
@@ -185,33 +207,10 @@ def describe_chr_byte(byte):
         items.append("rendered")
     return ", ".join(items) if items else "unaccessed"
 
-def get_csv_headers(args):
-    if args.part == "p":
-        rom = "PRG"
-        proc = "CPU"
-    else:
-        rom = "CHR"
-        proc = "PPU"
-    return (
-        f"{rom} address",
-        f"{rom}/{proc} bank",
-        f"offset in {rom}/{proc} bank",
-        f"{proc} address",
-        "CDL byte repeat count",
-        "CDL byte",
-        "CDL byte description",
-    )
+def generate_cdl_info(handle, args):
+    # get info about the CDL file; yield fields of one block per call
 
-def print_cdl_info(handle, args):
     fileInfo = get_file_info(handle.seek(0, 2), args)
-    if args.verbose:
-        print(
-            "Addresses to read from CDL file: "
-            f"0x{fileInfo['partStart']:04x}-0x{fileInfo['partStart']+fileInfo['partSize']-1:04x}"
-        )
-        print(f"Bitmask to 'AND' each CDL byte with: 0x{fileInfo['bitmask']:02x}")
-
-    print(",".join(f'"{f}"' for f in get_csv_headers(args)))
 
     if args.part == "p":
         # CPU bank info is redundant if CPU bank size is 32 KiB or there is only one CPU bank
@@ -224,18 +223,32 @@ def print_cdl_info(handle, args):
             descr = describe_prg_byte(byte, omitCpuBank, args.bank_size * 1024)
         else:
             descr = describe_chr_byte(byte)
-        print(",".join(str(n) for n in (
-            prgChrAddr, cpuPpuBank, offset, cpuPpuAddr, length, byte, f'"{descr:s}"'
-        )))
+        if args.output_format == "c":
+            yield (prgChrAddr, cpuPpuBank, offset, cpuPpuAddr, length, byte, f'"{descr}"')
+        else:
+            yield (
+                f"{prgChrAddr:06x}", f"{cpuPpuBank:02x}", f"{offset:04x}", f"{cpuPpuAddr:04x}",
+                f"{length:04x}", f"{byte:02x}", descr
+            )
 
 def main():
     args = parse_arguments()
 
+    # print CSV/table headers; pick field separator for data
+    headers = get_headers(args.part)
+    if args.output_format == "c":
+        fieldSeparator = ","
+        print(fieldSeparator.join(f'"{f}"' for f in headers))
+    else:
+        fieldSeparator = " "
+        print(", ".join(headers) + " (all numbers in hexadecimal):")
+
+    # print data lines
     try:
         with open(args.input_file, "rb") as handle:
-            print_cdl_info(handle, args)
+            for fields in generate_cdl_info(handle, args):
+                print(fieldSeparator.join(str(f) for f in fields))
     except OSError:
         sys.exit("Error reading the file.")
 
-if __name__ == "__main__":
-    main()
+main()

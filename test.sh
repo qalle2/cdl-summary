@@ -1,21 +1,19 @@
-clear
+# Warning: this script overwrites files.
 
-echo "=== Game Genie, PRG ROM, ignore access method, verbose ==="
-python3 cdl_summary.py --prg-size 16 --bank-size 16 --ignore-access-method --verbose cdl/gamegenie.cdl
-echo
+rm -f test-out/*.csv
+rm -f test-out/*.txt
 
-echo "=== SMB, PRG ROM ==="
-python3 cdl_summary.py --prg-size 32 --bank-size 32 cdl/smb.cdl
-echo
+python3 cdl_summary.py -r16 -b16        cdl/gamegenie.cdl > test-out/gamegenie-prg-default.csv
+python3 cdl_summary.py -r16 -b16 -ft    cdl/gamegenie.cdl > test-out/gamegenie-prg-default.txt
+python3 cdl_summary.py -r16 -b16 -m -fc cdl/gamegenie.cdl > test-out/gamegenie-prg-nomethod.csv
+python3 cdl_summary.py -r16 -b16 -m -ft cdl/gamegenie.cdl > test-out/gamegenie-prg-nomethod.txt
 
-echo "=== SMB, CHR ROM ==="
-python3 cdl_summary.py --prg-size 32 --part c --bank-size 8 cdl/smb.cdl
-echo
+python3 cdl_summary.py --prg-size 32     -b32    -ft cdl/smb.cdl > test-out/smb-prg-default.txt
+python3 cdl_summary.py --prg-size 32     -b32 -m -ft cdl/smb.cdl > test-out/smb-prg-nomethod.txt
+python3 cdl_summary.py --prg-size 32 -pc -b8     -ft cdl/smb.cdl > test-out/smb-chr.txt
 
-echo "=== Blaster Master, PRG ROM (2nd bank only) ==="
-python3 cdl_summary.py --prg-size 128 --part p --bank-size 16 --origin 32 cdl/blaster.cdl | grep "^[0-9]\+,1,"
-echo
+python3 cdl_summary.py --prg-size 128 -pp -b16     -ft cdl/blaster.cdl > test-out/blaster-prg.txt
+python3 cdl_summary.py --prg-size 128 -pc -b4  -o4 -ft cdl/blaster.cdl > test-out/blaster-chr.txt
 
-echo "=== Blaster Master, CHR ROM (2nd bank only) ==="
-python3 cdl_summary.py --prg-size 128 --part c --bank-size 4 --origin 0 cdl/blaster.cdl | grep "^[0-9]\+,1,"
-echo
+echo "test-out/:"
+ls -1 test-out/
