@@ -37,7 +37,7 @@ There's a sample CDL file in `gamegenie.cdl.gz` (gz compressed).
 PRG ROM &ndash; CSV output:
 ```
 $ python3 cdl_summary.py --prg-size 16 --bank-size 16 cdl/gamegenie.cdl
-"PRG address","PRG/CPU bank","offset in PRG/CPU bank","CPU address","CDL byte repeat count","CDL byte","CDL byte description"
+"ROM address","bank","offset in bank","NES address","CDL byte repeat count","CDL byte","CDL byte description"
 0,0,0,49152,13,2,"data"
 13,0,13,49165,12275,0,"unaccessed"
 12288,0,12288,61440,41,9,"code"
@@ -58,7 +58,7 @@ $ python3 cdl_summary.py --prg-size 16 --bank-size 16 cdl/gamegenie.cdl
 PRG ROM &ndash; tabular output:
 ```
 $ python3 cdl_summary.py --prg-size 16 --bank-size 16 --output-format t cdl/gamegenie.cdl
-PRG address, PRG/CPU bank, offset in PRG/CPU bank, CPU address, CDL byte repeat count, CDL byte, CDL byte description (all numbers in hexadecimal):
+ROM address, bank, offset in bank, NES address, CDL byte repeat count, CDL byte, CDL byte description (all numbers in hexadecimal):
 000000 00 0000 c000 000d 02 data
 00000d 00 000d c00d 2ff3 00 unaccessed
 003000 00 3000 f000 0029 09 code

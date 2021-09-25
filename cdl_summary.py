@@ -11,6 +11,12 @@ PRG_CODE          = 1 << 0
 CHR_READ_PROGRAMMATICALLY = 1 << 1
 CHR_RENDERED              = 1 << 0
 
+# CSV/table headers
+HEADERS = (
+    "ROM address", "bank", "offset in bank", "NES address", "CDL byte repeat count", "CDL byte",
+    "CDL byte description",
+)
+
 def parse_arguments():
     # parse command line arguments using argparse
 
@@ -83,24 +89,6 @@ def parse_arguments():
 
     return args
 
-def get_headers(part):
-    # get headers for CSV data or table
-    if part == "p":
-        rom = "PRG"
-        processor = "CPU"
-    else:
-        rom = "CHR"
-        processor = "PPU"
-    return (
-        f"{rom} address",
-        f"{rom}/{processor} bank",
-        f"offset in {rom}/{processor} bank",
-        f"{processor} address",
-        "CDL byte repeat count",
-        "CDL byte",
-        "CDL byte description",
-    )
-
 def get_file_info(fileSize, args):
     # get more info on what to do
 
@@ -148,7 +136,7 @@ def read_file_slice(handle, bytesLeft):
 
 def generate_cdl_blocks(handle, fileInfo, args):
     # read PRG/CHR ROM from CDL file; notes: "chunk" = bufferful of unprocessed data; "block" =
-    # sequence of repeating bytes; for each block, generate (PRG_or_CHR_address, length, value)
+    # sequence of repeating bytes; for each block, generate (rom_address, length, value)
 
     chunkStart = 0     # start address of current chunk
     blockStart = None  # start address of current block
@@ -213,21 +201,21 @@ def generate_cdl_info(handle, args):
     fileInfo = get_file_info(handle.seek(0, 2), args)
 
     if args.part == "p":
-        # CPU bank info is redundant if CPU bank size is 32 KiB or there is only one CPU bank
+        # CPU bank info is redundant if banks are 32 KiB or there is only one bank
         omitCpuBank = args.bank_size * 1024 in (32 * 1024, fileInfo["partSize"])
 
-    for (prgChrAddr, length, byte) in generate_cdl_blocks(handle, fileInfo, args):
-        (cpuPpuBank, offset) = divmod(prgChrAddr, args.bank_size * 1024)
-        cpuPpuAddr = fileInfo["origin"] + offset
+    for (romAddr, length, byte) in generate_cdl_blocks(handle, fileInfo, args):
+        (bank, offset) = divmod(romAddr, args.bank_size * 1024)
+        nesAddr = fileInfo["origin"] + offset
         if args.part == "p":
             descr = describe_prg_byte(byte, omitCpuBank, args.bank_size * 1024)
         else:
             descr = describe_chr_byte(byte)
         if args.output_format == "c":
-            yield (prgChrAddr, cpuPpuBank, offset, cpuPpuAddr, length, byte, f'"{descr}"')
+            yield (romAddr, bank, offset, nesAddr, length, byte, f'"{descr}"')
         else:
             yield (
-                f"{prgChrAddr:06x}", f"{cpuPpuBank:02x}", f"{offset:04x}", f"{cpuPpuAddr:04x}",
+                f"{romAddr:06x}", f"{bank:02x}", f"{offset:04x}", f"{nesAddr:04x}",
                 f"{length:04x}", f"{byte:02x}", descr
             )
 
@@ -235,13 +223,12 @@ def main():
     args = parse_arguments()
 
     # print CSV/table headers; pick field separator for data
-    headers = get_headers(args.part)
     if args.output_format == "c":
         fieldSeparator = ","
-        print(fieldSeparator.join(f'"{f}"' for f in headers))
+        print(fieldSeparator.join(f'"{f}"' for f in HEADERS))
     else:
         fieldSeparator = " "
-        print(", ".join(headers) + " (all numbers in hexadecimal):")
+        print(", ".join(HEADERS) + " (all numbers in hexadecimal):")
 
     # print data lines
     try:
