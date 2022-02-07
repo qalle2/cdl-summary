@@ -31,9 +31,22 @@ optional arguments:
                         hexadecimal). Default='c'.
 ```
 
-There's a sample CDL file in `gamegenie.cdl.gz` (gz compressed).
+## Sample CDL files
+
+There are some CDL files under `cdl/`.
+
+Percentage of unlogged bytes (lower is better):
+* blastermaster-u.cdl: 19%
+* daysofthunder-u.cdl: 9%
+* drmario-ju-prg0.cdl: 14%
+* drmario-ju-prg1.cdl: 18%
+* excitebike-ju.cdl: 6%
+* gamegenie.cdl: 82%
+* lunarpool-u.cdl: 14%
+* smb1-w.cdl: 1%
 
 ## Examples
+
 PRG ROM &ndash; CSV output:
 ```
 $ python3 cdl_summary.py --prg-size 16 --bank-size 16 cdl/gamegenie.cdl
