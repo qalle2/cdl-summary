@@ -42,6 +42,7 @@ Percentage of unlogged bytes (lower is better):
 * drmario-ju-prg1.cdl: 18%
 * excitebike-ju.cdl: 6%
 * gamegenie.cdl: 82%
+* golf-u.cdl: 3%
 * lunarpool-u.cdl: 14%
 * smb1-w.cdl: 1%
 
