@@ -1,6 +1,7 @@
 import argparse, os, sys
 
-# bitmasks for CDL data bytes; see http://fceux.com/web/help/CodeDataLogger.html
+# bitmasks for CDL data bytes;
+# see http://fceux.com/web/help/CodeDataLogger.html
 PRG_PCM_AUDIO     = 1 << 6
 PRG_INDIRECT_DATA = 1 << 5
 PRG_INDIRECT_CODE = 1 << 4
@@ -13,57 +14,69 @@ CHR_RENDERED              = 1 << 0
 
 # CSV/table headers
 HEADERS = (
-    "ROM address", "bank", "offset in bank", "NES address", "CDL byte repeat count", "CDL byte",
-    "CDL byte description",
+    "ROM address", "bank", "offset in bank", "NES address",
+    "CDL byte repeat count", "CDL byte", "CDL byte description",
 )
 
 def parse_arguments():
     # parse command line arguments using argparse
 
     parser = argparse.ArgumentParser(
-        description="Print an FCEUX Code/Data Logger file (.cdl) in human-readable format."
+        description="Print an FCEUX Code/Data Logger file (.cdl) in "
+        "human-readable format."
     )
 
     parser.add_argument(
         "-r", "--prg-size", type=int, required=True,
-        help="PRG ROM size of input file, in KiB (16-4096 and a multiple of 16, usually a power "
-        "of two). Required."
+        help="PRG ROM size of input file, in KiB (16-4096 and a multiple of "
+        "16, usually a power of two). Required."
     )
     parser.add_argument(
         "-p", "--part", choices=("p", "c"), default="p",
-        help="Which part to read from input file. 'p'=PRG ROM, 'c'=CHR ROM. Default='p'."
+        help="Which part to read from input file. 'p'=PRG ROM, 'c'=CHR ROM. "
+        "Default='p'."
     )
     parser.add_argument(
-        "-b", "--bank-size", type=int, choices=(1, 2, 4, 8, 16, 32), required=True,
-        help="Size of ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8 for CHR ROM. Required."
+        "-b", "--bank-size", type=int, choices=(1, 2, 4, 8, 16, 32),
+        required=True,
+        help="Size of ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8 for "
+        "CHR ROM. Required."
     )
     parser.add_argument(
-        "-o", "--origin", type=int, choices=(0, 1, 2, 3, 4, 5, 6, 7, 32, 40, 48, 56),
-        help="The CPU/PPU address each ROM bank starts from, in KiB. For PRG ROM: 32/40/48/56 but "
-        "not greater than 64 minus --bank-size; default=maximum. For CHR ROM: 0-7 but not greater "
-        "than 8 minus --bank-size; default=0."
+        "-o", "--origin", type=int,
+        choices=(0, 1, 2, 3, 4, 5, 6, 7, 32, 40, 48, 56),
+        help="The CPU/PPU address each ROM bank starts from, in KiB. For "
+        "PRG ROM: 32/40/48/56 but not greater than 64 minus --bank-size; "
+        "default=maximum. For CHR ROM: 0-7 but not greater than 8 minus "
+        "--bank-size; default=0."
     )
     parser.add_argument(
         "-m", "--ignore-access-method", action="store_true",
-        help="Ignore how PRG ROM bytes were accessed (directly/indirectly/as PCM audio)."
+        help="Ignore how PRG ROM bytes were accessed (directly/indirectly/as "
+        "PCM audio)."
     )
     parser.add_argument(
         "-f", "--output-format", choices={"c", "t"}, default="c",
-        help="Output format. 'c' = CSV (fields separated by commas, numbers in decimal, strings "
-        "quoted); 't'=tabular (constant-width fields, numbers in hexadecimal). Default='c'."
+        help="Output format. 'c' = CSV (fields separated by commas, numbers "
+        "in decimal, strings quoted); 't'=tabular (constant-width fields, "
+        "numbers in hexadecimal). Default='c'."
     )
     parser.add_argument(
-        "input_file", help="The .cdl file to read. Size: 16-6136 KiB and a multiple of 8 KiB."
+        "input_file",
+        help="The .cdl file to read. Size: 16-6136 KiB and a multiple of "
+        "8 KiB."
     )
 
     args = parser.parse_args()
 
-    # note: CDL file = data for PRG ROM (1-256 times 16 KiB) + data for CHR ROM (0-255 times 8 KiB)
+    # note: CDL file = data for PRG ROM (1-256 times 16 KiB)
+    # + data for CHR ROM (0-255 times 8 KiB)
 
     # validate PRG size, bank size and origin
     if args.prg_size % 16 or not 16 <= args.prg_size <= 256 * 16:
         sys.exit("Invalid PRG ROM size.")
-    if args.part == "p" and args.bank_size < 8 or args.part == "c" and args.bank_size > 8:
+    if args.part == "p" and args.bank_size < 8 \
+    or args.part == "c" and args.bank_size > 8:
         sys.exit("Invalid ROM bank size.")
     if args.part == "p" and args.prg_size % args.bank_size:
         sys.exit("PRG ROM size must be divisible by PRG ROM bank size.")
@@ -80,10 +93,14 @@ def parse_arguments():
         fileSize = os.path.getsize(args.input_file)
     except OSError:
         sys.exit("Error getting file size.")
-    if fileSize % (8 * 1024) or not 16 * 1024 <= fileSize <= (256 * 16 + 255 * 8) * 1024:
+    if fileSize % (8 * 1024) \
+    or not 16 * 1024 <= fileSize <= (256 * 16 + 255 * 8) * 1024:
         sys.exit("Invalid file size.")
     if fileSize > (args.prg_size + 255 * 8) * 1024:
-        sys.exit("PRG ROM is too small w.r.t. file size (CHR ROM would be too large).")
+        sys.exit(
+            "PRG ROM is too small w.r.t. file size (CHR ROM would be too "
+            "large)."
+        )
     if args.part == "c" and fileSize == args.prg_size * 1024:
         sys.exit("File has no CHR ROM.")
 
@@ -135,8 +152,9 @@ def read_file_slice(handle, bytesLeft):
         bytesLeft -= chunkSize
 
 def generate_cdl_blocks(handle, fileInfo, args):
-    # read PRG/CHR ROM from CDL file; notes: "chunk" = bufferful of unprocessed data; "block" =
-    # sequence of repeating bytes; for each block, generate (rom_address, length, value)
+    # read PRG/CHR ROM from CDL file; notes: "chunk" = bufferful of
+    # unprocessed data; "block" = sequence of repeating bytes; for each
+    # block, generate (rom_address, length, value)
 
     chunkStart = 0     # start address of current chunk
     blockStart = None  # start address of current block
@@ -150,7 +168,8 @@ def generate_cdl_blocks(handle, fileInfo, args):
                 # start new block
                 blockStart = chunkStart + pos
                 blockByte = byte
-            elif byte != blockByte or (chunkStart + pos) % (args.bank_size * 1024) == 0:
+            elif byte != blockByte \
+            or (chunkStart + pos) % (args.bank_size * 1024) == 0:
                 # end current block, start new one
                 yield (blockStart, chunkStart + pos - blockStart, blockByte)
                 blockStart = chunkStart + pos
@@ -181,9 +200,12 @@ def describe_prg_byte(byte, omitCpuBank, bankSize):
 
     if byte and not omitCpuBank:
         cpuBankStart = (
-            32 + bool(byte & PRG_CPU_BANK_HI) * 16 + bool(byte & PRG_CPU_BANK_LO) * 8
+            32 + bool(byte & PRG_CPU_BANK_HI) * 16
+            + bool(byte & PRG_CPU_BANK_LO) * 8
         ) * 1024
-        items.append(f"CPU bank 0x{cpuBankStart:04x}-0x{cpuBankStart+bankSize-1:04x}")
+        items.append(
+            f"CPU bank 0x{cpuBankStart:04x}-0x{cpuBankStart+bankSize-1:04x}"
+        )
 
     return ", ".join(items) if items else "unaccessed"
 
@@ -201,8 +223,9 @@ def generate_cdl_info(handle, args):
     fileInfo = get_file_info(handle.seek(0, 2), args)
 
     if args.part == "p":
-        # CPU bank info is redundant if banks are 32 KiB or there is only one bank
-        omitCpuBank = args.bank_size * 1024 in (32 * 1024, fileInfo["partSize"])
+        # CPU bank info's redundant if banks are 32 KiB or there's only 1 bank
+        omitCpuBank = args.bank_size * 1024 \
+        in (32 * 1024, fileInfo["partSize"])
 
     for (romAddr, length, byte) in generate_cdl_blocks(handle, fileInfo, args):
         (bank, offset) = divmod(romAddr, args.bank_size * 1024)
@@ -215,8 +238,8 @@ def generate_cdl_info(handle, args):
             yield (romAddr, bank, offset, nesAddr, length, byte, f'"{descr}"')
         else:
             yield (
-                f"{romAddr:06x}", f"{bank:02x}", f"{offset:04x}", f"{nesAddr:04x}",
-                f"{length:04x}", f"{byte:02x}", descr
+                f"{romAddr:06x}", f"{bank:02x}", f"{offset:04x}",
+                f"{nesAddr:04x}", f"{length:04x}", f"{byte:02x}", descr
             )
 
 def main():

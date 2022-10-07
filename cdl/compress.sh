@@ -1,2 +1,1 @@
-rm -f *.gz
-gzip -k --best *.cdl
+gzip -9fk *.cdl
