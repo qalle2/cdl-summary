@@ -1,4 +1,11 @@
 # cdl-summary
+
+Table of contents:
+* [cdl_summary.py](#cdl_summarypy)
+* [cdl2png.py](#cdl2pngpy)
+* [Sample CDL files](#sample-cdl-files)
+
+## cdl_summary.py
 ```
 usage: cdl_summary.py [-h] -r PRG_SIZE [-p {p,c}] -b {1,2,4,8,16,32}
                       [-o {0,1,2,3,4,5,6,7,32,40,48,56}] [-m] [-f {t,c}]
@@ -31,22 +38,7 @@ optional arguments:
                         hexadecimal). Default='c'.
 ```
 
-## Sample CDL files
-
-There are some CDL files under `cdl/`.
-
-Percentage of unlogged bytes (lower is better):
-* `blastermaster-u.cdl`: 19%
-* `daysofthunder-u.cdl`: 9%
-* `drmario-ju-prg0.cdl`: 14%
-* `drmario-ju-prg1.cdl`: 18%
-* `excitebike-ju.cdl`: 6%
-* `gamegenie.cdl`: 82%
-* `golf-u.cdl`: 3%
-* `lunarpool-u.cdl`: 14%
-* `smb1-w.cdl`: 1%
-
-## Examples
+### Examples
 
 PRG ROM &ndash; CSV output:
 ```
@@ -89,3 +81,30 @@ ROM address, bank, offset in bank, NES address, CDL byte repeat count, CDL byte,
 00325b 00 325b f25b 0001 0b code, data
 (snip)
 ```
+
+## cdl2png.py
+```
+Convert an FCEUX Code/Data Logger file (.cdl) into a PNG image file. Colors:
+black = unaccessed, orange = code (PRG) / rendered (CHR), blue = data (PRG) /
+read programmatically (CHR), white = both. Args: input_file output_file
+```
+
+Requires [Pillow](https://python-pillow.org).
+
+An example from *Super Mario Bros.* by Nintendo:
+
+![a CDL file as a PNG file](cdl2png-snap.png)
+
+## Sample CDL files
+There are some CDL files under `cdl/`.
+
+Percentage of unlogged bytes (lower is better):
+* `blastermaster-u.cdl`: 19%
+* `daysofthunder-u.cdl`: 9%
+* `drmario-ju-prg0.cdl`: 14%
+* `drmario-ju-prg1.cdl`: 18%
+* `excitebike-ju.cdl`: 6%
+* `gamegenie.cdl`: 82%
+* `golf-u.cdl`: 3%
+* `lunarpool-u.cdl`: 14%
+* `smb1-w.cdl`: 1%
