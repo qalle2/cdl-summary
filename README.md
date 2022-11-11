@@ -8,34 +8,39 @@ Table of contents:
 ## cdl_summary.py
 ```
 usage: cdl_summary.py [-h] -r PRG_SIZE [-p {p,c}] -b {1,2,4,8,16,32}
-                      [-o {0,1,2,3,4,5,6,7,32,40,48,56}] [-m] [-f {t,c}]
+                      [-o {0,1,2,3,4,5,6,7,32,40,48,56}] [-m] [-f {c,t}]
                       input_file
 
 Print an FCEUX Code/Data Logger file (.cdl) in human-readable format.
 
 positional arguments:
-  input_file            The .cdl file to read. Size: 16-6136 KiB and a multiple of 8 KiB.
+  input_file            The .cdl file to read. Size: 16-6136 KiB and a
+                        multiple of 8 KiB.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -r PRG_SIZE, --prg-size PRG_SIZE
-                        PRG ROM size of input file, in KiB (16-4096 and a multiple of 16, usually
-                        a power of two). Required.
+                        PRG ROM size of input file, in KiB (16-4096 and a
+                        multiple of 16, usually a power of two). Required.
   -p {p,c}, --part {p,c}
-                        Which part to read from input file. 'p'=PRG ROM, 'c'=CHR ROM. Default='p'.
+                        Which part to read from input file. 'p'=PRG ROM,
+                        'c'=CHR ROM. Default='p'.
   -b {1,2,4,8,16,32}, --bank-size {1,2,4,8,16,32}
-                        Size of ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8 for CHR ROM.
-                        Required.
+                        Size of ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8
+                        for CHR ROM. Required.
   -o {0,1,2,3,4,5,6,7,32,40,48,56}, --origin {0,1,2,3,4,5,6,7,32,40,48,56}
-                        The CPU/PPU address each ROM bank starts from, in KiB. For PRG ROM:
-                        32/40/48/56 but not greater than 64 minus --bank-size; default=maximum.
-                        For CHR ROM: 0-7 but not greater than 8 minus --bank-size; default=0.
+                        The CPU/PPU address each ROM bank starts from, in KiB.
+                        For PRG ROM: 32/40/48/56 but not greater than 64 minus
+                        --bank-size; default=maximum. For CHR ROM: 0-7 but not
+                        greater than 8 minus --bank-size; default=0.
   -m, --ignore-access-method
-                        Ignore how PRG ROM bytes were accessed (directly/indirectly/as PCM audio).
-  -f {t,c}, --output-format {t,c}
-                        Output format. 'c' = CSV (fields separated by commas, numbers in decimal,
-                        strings quoted); 't'=tabular (constant-width fields, numbers in
-                        hexadecimal). Default='c'.
+                        Ignore how PRG ROM bytes were accessed
+                        (directly/indirectly/as PCM audio).
+  -f {c,t}, --output-format {c,t}
+                        Output format. 'c' = CSV (fields separated by commas,
+                        numbers in decimal, strings quoted); 't'=tabular
+                        (constant-width fields, numbers in hexadecimal).
+                        Default='c'.
 ```
 
 ### Examples
@@ -43,7 +48,8 @@ optional arguments:
 PRG ROM &ndash; CSV output:
 ```
 $ python3 cdl_summary.py --prg-size 16 --bank-size 16 cdl/gamegenie.cdl
-"ROM address","bank","offset in bank","NES address","CDL byte repeat count","CDL byte","CDL byte description"
+"ROM address","bank","offset in bank","NES address","CDL byte repeat count",
+"CDL byte","CDL byte description"
 0,0,0,49152,13,2,"data"
 13,0,13,49165,12275,0,"unaccessed"
 12288,0,12288,61440,41,9,"code"
@@ -63,8 +69,10 @@ $ python3 cdl_summary.py --prg-size 16 --bank-size 16 cdl/gamegenie.cdl
 
 PRG ROM &ndash; tabular output:
 ```
-$ python3 cdl_summary.py --prg-size 16 --bank-size 16 --output-format t cdl/gamegenie.cdl
-ROM address, bank, offset in bank, NES address, CDL byte repeat count, CDL byte, CDL byte description (all numbers in hexadecimal):
+$ python3 cdl_summary.py --prg-size 16 --bank-size 16 --output-format t
+cdl/gamegenie.cdl
+ROM address, bank, offset in bank, NES address, CDL byte repeat count, CDL
+byte, CDL byte description (all numbers in hexadecimal):
 000000 00 0000 c000 000d 02 data
 00000d 00 000d c00d 2ff3 00 unaccessed
 003000 00 3000 f000 0029 09 code
@@ -93,7 +101,7 @@ Requires [Pillow](https://python-pillow.org).
 
 An example from *Super Mario Bros.* by Nintendo:
 
-![a CDL file as a PNG file](cdl2png-snap.png)
+![a CDL file as a PNG file](cdl2png-example.png)
 
 ## Sample CDL files
 There are some CDL files under `cdl/`.
