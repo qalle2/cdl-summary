@@ -103,6 +103,8 @@ An example from *Super Mario Bros.* by Nintendo:
 
 ![a CDL file as a PNG file](cdl2png-example.png)
 
+There are more examples under `cdl/`.
+
 ## Sample CDL files
 There are some CDL files under `cdl/`.
 
