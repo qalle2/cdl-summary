@@ -16,9 +16,7 @@ def parse_arguments():
     if len(sys.argv) != 3:
         sys.exit(
             "Convert an FCEUX Code/Data Logger file (.cdl) into a PNG image "
-            "file. Colors: black = unaccessed, orange = code (PRG) / rendered "
-            "(CHR), blue = data (PRG) / read programmatically (CHR), white = "
-            "both. Args: input_file output_file"
+            "file. Arguments: inputFile outputFile. See README.md for details."
         )
 
     (inFile, outFile) = sys.argv[1:]

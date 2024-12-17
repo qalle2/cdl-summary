@@ -8,29 +8,29 @@ Table of contents:
 ## cdl_summary.py
 Print an FCEUX Code/Data Logger file (.cdl) in human-readable format.
 
-Command line arguments: *options* *inputFile*
+Command line arguments: *Options* *InputFile*
 
-Options:
- * `-r N` or `--prg-size N`: The PRG ROM size of the input file:
-   * `N` is the size in kilobytes. It must be 16 to 4096 and a multiple of 16. It is usually a power of two (16, 32, 64, &hellip;).
-   * This option is required.
- * `-p PART` or `--part PART`: Which part to read from the input file. `PART` must be one of:
-   * `p` = PRG ROM. This is the default.
-   * `c` = CHR ROM.
- * `-b N` or `--bank-size N`: The size of the ROM banks in kilobytes:
-   * For PRG ROM, `N` must be 8, 16 or 32.
-   * For CHR ROM, `N` must be 1, 2, 4 or 8.
-   * This option is required.
- * `-o N` or `--origin N`: The CPU/PPU address each PRG/CHR ROM bank starts from, in kilobytes:
-   * For PRG ROM, `N` must be 32, 40, 48 or 56 (for addresses 0x8000, 0xa000, 0xc000 or 0xe000, respectively) but not greater than 64 minus `--bank-size`. The default is the greatest value possible.
-   * For CHR ROM, `N` must be 0 to 7 but not greater than 8 minus `--bank-size`. The default is 0.
- * `-m` or `--ignore-access-method`: Ignore how PRG ROM bytes are accessed (directly, indirectly or as PCM audio).
- * `-f FORMAT` or `--output-format FORMAT`: How to print the results. `FORMAT` must be one of:
-   * `c` = CSV (fields separated by commas, numbers in decimal, strings quoted). This is the default.
-   * `t` = tabular (constant-width fields, numbers in hexadecimal).
- * `-h` or `--help`: Print a shorter version of this help and exit.
+*Options*:
+* `-r N` or `--prg-size N`: The PRG ROM size of the input file:
+  * `N` is the size in kilobytes. It must be 16 to 4096 and a multiple of 16. It is usually a power of two (16, 32, 64, &hellip;).
+  * This option is required.
+* `-p PART` or `--part PART`: Which part to read from the input file. `PART` must be one of:
+  * `p` = PRG ROM. This is the default.
+  * `c` = CHR ROM.
+* `-b N` or `--bank-size N`: The size of the PRG/CHR ROM banks in kilobytes:
+  * For PRG ROM, `N` must be 8, 16 or 32.
+  * For CHR ROM, `N` must be 1, 2, 4 or 8.
+  * This option is required.
+* `-o N` or `--origin N`: The CPU/PPU address each PRG/CHR ROM bank starts from, in kilobytes:
+  * For PRG ROM, `N` must be 32, 40, 48 or 56 (for addresses 0x8000, 0xa000, 0xc000 or 0xe000, respectively) but not greater than 64 minus `--bank-size`. The default is the greatest value possible.
+  * For CHR ROM, `N` must be 0 to 7 but not greater than 8 minus `--bank-size`. The default is 0.
+* `-m` or `--ignore-access-method`: Ignore how PRG ROM bytes are accessed (directly, indirectly or as PCM audio).
+* `-f FORMAT` or `--output-format FORMAT`: How to print the results. `FORMAT` must be one of:
+  * `c` = CSV (fields separated by commas, numbers in decimal, strings quoted). This is the default.
+  * `t` = tabular (constant-width fields, numbers in hexadecimal).
+* `-h` or `--help`: Print a shorter version of this help and exit.
 
-*inputFile*: The `.cdl` file to read. The size must be 16 to 6136 kilobytes and a multiple of 8 kilobytes.
+*InputFile*: The `.cdl` file to read. The size must be 16 to 6136 kilobytes and a multiple of 8 kilobytes.
 
 ### Examples
 
@@ -80,13 +80,17 @@ byte, CDL byte description (all numbers in hexadecimal):
 ```
 
 ## cdl2png.py
-```
-Convert an FCEUX Code/Data Logger file (.cdl) into a PNG image file. Colors:
-black = unaccessed, orange = code (PRG) / rendered (CHR), blue = data (PRG) /
-read programmatically (CHR), white = both. Args: input_file output_file
-```
+Convert an FCEUX Code/Data Logger file (.cdl) into an image file. Requires [Pillow](https://python-pillow.org).
 
-Requires [Pillow](https://python-pillow.org).
+Command line arguments: *InputFile* *OutputFile*:
+* *InputFile*: The `.cdl` file to read.
+* *OutputFile*: The PNG image file to write.
+
+Each pixel in the output file corresponds to a byte in the CDL data. Colors:
+* black = unaccessed
+* orange = code (for PRG ROM) or rendered (for CHR ROM)
+* blue = data (for PRG ROM) or read programmatically (for CHR ROM)
+* white = both orange and blue.
 
 An example from *Super Mario Bros.* by Nintendo:
 
