@@ -6,42 +6,31 @@ Table of contents:
 * [Sample CDL files](#sample-cdl-files)
 
 ## cdl_summary.py
-```
-usage: cdl_summary.py [-h] -r PRG_SIZE [-p {p,c}] -b {1,2,4,8,16,32}
-                      [-o {0,1,2,3,4,5,6,7,32,40,48,56}] [-m] [-f {c,t}]
-                      input_file
-
 Print an FCEUX Code/Data Logger file (.cdl) in human-readable format.
 
-positional arguments:
-  input_file            The .cdl file to read. Size: 16-6136 KiB and a
-                        multiple of 8 KiB.
+Command line arguments: *options* *inputFile*
 
-options:
-  -h, --help            show this help message and exit
-  -r PRG_SIZE, --prg-size PRG_SIZE
-                        PRG ROM size of input file, in KiB (16-4096 and a
-                        multiple of 16, usually a power of two). Required.
-  -p {p,c}, --part {p,c}
-                        Which part to read from input file. 'p'=PRG ROM,
-                        'c'=CHR ROM. Default='p'.
-  -b {1,2,4,8,16,32}, --bank-size {1,2,4,8,16,32}
-                        Size of ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8
-                        for CHR ROM. Required.
-  -o {0,1,2,3,4,5,6,7,32,40,48,56}, --origin {0,1,2,3,4,5,6,7,32,40,48,56}
-                        The CPU/PPU address each ROM bank starts from, in KiB.
-                        For PRG ROM: 32/40/48/56 but not greater than 64 minus
-                        --bank-size; default=maximum. For CHR ROM: 0-7 but not
-                        greater than 8 minus --bank-size; default=0.
-  -m, --ignore-access-method
-                        Ignore how PRG ROM bytes were accessed
-                        (directly/indirectly/as PCM audio).
-  -f {c,t}, --output-format {c,t}
-                        Output format. 'c' = CSV (fields separated by commas,
-                        numbers in decimal, strings quoted); 't'=tabular
-                        (constant-width fields, numbers in hexadecimal).
-                        Default='c'.
-```
+Options:
+ * `-r N` or `--prg-size N`: The PRG ROM size of the input file:
+   * `N` is the size in kilobytes. It must be 16 to 4096 and a multiple of 16. It is usually a power of two (16, 32, 64, &hellip;).
+   * This option is required.
+ * `-p PART` or `--part PART`: Which part to read from the input file. `PART` must be one of:
+   * `p` = PRG ROM. This is the default.
+   * `c` = CHR ROM.
+ * `-b N` or `--bank-size N`: The size of the ROM banks in kilobytes:
+   * For PRG ROM, `N` must be 8, 16 or 32.
+   * For CHR ROM, `N` must be 1, 2, 4 or 8.
+   * This option is required.
+ * `-o N` or `--origin N`: The CPU/PPU address each PRG/CHR ROM bank starts from, in kilobytes:
+   * For PRG ROM, `N` must be 32, 40, 48 or 56 (for addresses 0x8000, 0xa000, 0xc000 or 0xe000, respectively) but not greater than 64 minus `--bank-size`. The default is the greatest value possible.
+   * For CHR ROM, `N` must be 0 to 7 but not greater than 8 minus `--bank-size`. The default is 0.
+ * `-m` or `--ignore-access-method`: Ignore how PRG ROM bytes are accessed (directly, indirectly or as PCM audio).
+ * `-f FORMAT` or `--output-format FORMAT`: How to print the results. `FORMAT` must be one of:
+   * `c` = CSV (fields separated by commas, numbers in decimal, strings quoted). This is the default.
+   * `t` = tabular (constant-width fields, numbers in hexadecimal).
+ * `-h` or `--help`: Print a shorter version of this help and exit.
+
+*inputFile*: The `.cdl` file to read. The size must be 16 to 6136 kilobytes and a multiple of 8 kilobytes.
 
 ### Examples
 

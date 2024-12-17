@@ -22,50 +22,26 @@ def parse_arguments():
     # parse command line arguments using argparse
 
     parser = argparse.ArgumentParser(
-        description="Print an FCEUX Code/Data Logger file (.cdl) in "
-        "human-readable format."
+        description="Print an FCEUX Code/Data Logger file (.cdl) in human-"
+        "readable format. See README.md for details."
     )
 
-    parser.add_argument(
-        "-r", "--prg-size", type=int, required=True,
-        help="PRG ROM size of input file, in KiB (16-4096 and a multiple of "
-        "16, usually a power of two). Required."
-    )
-    parser.add_argument(
-        "-p", "--part", choices=("p", "c"), default="p",
-        help="Which part to read from input file. 'p'=PRG ROM, 'c'=CHR ROM. "
-        "Default='p'."
-    )
+    parser.add_argument("-r", "--prg-size", type=int, required=True)
+    parser.add_argument("-p", "--part", choices=("p", "c"), default="p")
     parser.add_argument(
         "-b", "--bank-size", type=int, choices=(1, 2, 4, 8, 16, 32),
-        required=True,
-        help="Size of ROM banks in KiB. 8/16/32 for PRG ROM, 1/2/4/8 for "
-        "CHR ROM. Required."
+        required=True
     )
     parser.add_argument(
         "-o", "--origin", type=int,
-        choices=(0, 1, 2, 3, 4, 5, 6, 7, 32, 40, 48, 56),
-        help="The CPU/PPU address each ROM bank starts from, in KiB. For "
-        "PRG ROM: 32/40/48/56 but not greater than 64 minus --bank-size; "
-        "default=maximum. For CHR ROM: 0-7 but not greater than 8 minus "
-        "--bank-size; default=0."
+        choices=(0, 1, 2, 3, 4, 5, 6, 7, 32, 40, 48, 56)
     )
+    parser.add_argument("-m", "--ignore-access-method", action="store_true")
     parser.add_argument(
-        "-m", "--ignore-access-method", action="store_true",
-        help="Ignore how PRG ROM bytes were accessed (directly/indirectly/as "
-        "PCM audio)."
+        "-f", "--output-format", choices={"c", "t"}, default="c"
     )
-    parser.add_argument(
-        "-f", "--output-format", choices={"c", "t"}, default="c",
-        help="Output format. 'c' = CSV (fields separated by commas, numbers "
-        "in decimal, strings quoted); 't'=tabular (constant-width fields, "
-        "numbers in hexadecimal). Default='c'."
-    )
-    parser.add_argument(
-        "input_file",
-        help="The .cdl file to read. Size: 16-6136 KiB and a multiple of "
-        "8 KiB."
-    )
+
+    parser.add_argument("input_file")
 
     args = parser.parse_args()
 
