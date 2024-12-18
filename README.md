@@ -18,16 +18,15 @@ Command line arguments: *Options* *InputFile*
   * `p` = PRG ROM. This is the default.
   * `c` = CHR ROM.
 * `-b N` or `--bank-size N`: The size of the PRG/CHR ROM banks in kilobytes:
-  * For PRG ROM, `N` must be 8, 16 or 32.
-  * For CHR ROM, `N` must be 1, 2, 4 or 8.
-  * This option is required.
+  * For PRG ROM, `N` must be 8, 16 or 32. Default: 16 for 16-KiB PRG ROM, otherwise 32.
+  * For CHR ROM, `N` must be 1, 2, 4 or 8. Default: 8.
 * `-o N` or `--origin N`: The CPU/PPU address each PRG/CHR ROM bank starts from, in kilobytes:
   * For PRG ROM, `N` must be 32, 40, 48 or 56 (for addresses 0x8000, 0xa000, 0xc000 or 0xe000, respectively) but not greater than 64 minus `--bank-size`. The default is the greatest value possible.
   * For CHR ROM, `N` must be 0 to 7 but not greater than 8 minus `--bank-size`. The default is 0.
-* `-m` or `--ignore-access-method`: Ignore how PRG ROM bytes are accessed (directly, indirectly or as PCM audio).
+* `--ignore-access-method`: Ignore how PRG ROM bytes are accessed (directly, indirectly or as PCM audio).
 * `-f FORMAT` or `--output-format FORMAT`: How to print the results. `FORMAT` must be one of:
-  * `c` = CSV (fields separated by commas, numbers in decimal, strings quoted). This is the default.
-  * `t` = tabular (constant-width fields, numbers in hexadecimal).
+  * `c` = CSV (fields separated by commas, all numbers in decimal, strings quoted). This is the default.
+  * `t` = tabular (constant-width fields, all numbers in hexadecimal).
 * `-h` or `--help`: Print a shorter version of this help and exit.
 
 *InputFile*: The `.cdl` file to read. The size must be 16 to 6136 kilobytes and a multiple of 8 kilobytes.

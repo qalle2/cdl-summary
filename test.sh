@@ -5,30 +5,46 @@ rm -f test-out/*.csv
 rm -f test-out/*.txt
 rm -f test-out/*.png
 
-python3 cdl_summary.py \
-    -r16 -b16 cdl/gamegenie.cdl > test-out/gamegenie-prg-default.csv
-python3 cdl_summary.py \
-    -r16 -b16 -ft cdl/gamegenie.cdl > test-out/gamegenie-prg-default.txt
-python3 cdl_summary.py \
-    -r16 -b16 -m -fc cdl/gamegenie.cdl > test-out/gamegenie-prg-nomethod.csv
-python3 cdl_summary.py \
-    -r16 -b16 -m -ft cdl/gamegenie.cdl > test-out/gamegenie-prg-nomethod.txt
+echo "=== Testing cdl_summary.py ==="
 
 python3 cdl_summary.py \
-    -r32 -b32 -ft cdl/smb1-w.cdl > test-out/smb-prg-default.txt
+    --prg-size 16 \
+    cdl/gamegenie.cdl > test-out/gamegenie-prg-default.csv
 python3 cdl_summary.py \
-    -r32 -b32 -m -ft cdl/smb1-w.cdl > test-out/smb-prg-nomethod.txt
+    --prg-size 16 --output-format t \
+    cdl/gamegenie.cdl > test-out/gamegenie-prg-default.txt
 python3 cdl_summary.py \
-    -r32 -pc -b8 -ft cdl/smb1-w.cdl > test-out/smb-chr.txt
+    --prg-size 16 --ignore-access-method --output-format c \
+    cdl/gamegenie.cdl > test-out/gamegenie-prg-nomethod.csv
+python3 cdl_summary.py \
+    --prg-size 16 --ignore-access-method --output-format t \
+    cdl/gamegenie.cdl > test-out/gamegenie-prg-nomethod.txt
 
 python3 cdl_summary.py \
-    -r128 -pp -b16 -ft cdl/blastermaster-u.cdl > test-out/blaster-prg.txt
+    --prg-size 32 --output-format t \
+    cdl/smb1-w.cdl > test-out/smb-prg-default.txt
 python3 cdl_summary.py \
-    -r128 -pc -b4 -o4 -ft cdl/blastermaster-u.cdl > test-out/blaster-chr.txt
+    --prg-size 32 --ignore-access-method --output-format t \
+    cdl/smb1-w.cdl > test-out/smb-prg-nomethod.txt
+python3 cdl_summary.py \
+    --prg-size 32 --part c --output-format t \
+    cdl/smb1-w.cdl > test-out/smb-chr.txt
 
-python3 cdl2png.py cdl/gamegenie.cdl test-out/gamegenie.png
-python3 cdl2png.py cdl/smb1-w.cdl test-out/smb1-w.png
+python3 cdl_summary.py \
+    --prg-size 128 --part p --bank-size 16 --output-format t \
+    cdl/blastermaster-u.cdl > test-out/blaster-prg.txt
+python3 cdl_summary.py \
+    --prg-size 128 --part c --bank-size 4 --output-format t \
+    cdl/blastermaster-u.cdl > test-out/blaster-chr.txt
+
+echo
+
+echo "=== Testing cdl2png.py ==="
+python3 cdl2png.py cdl/gamegenie.cdl       test-out/gamegenie.png
+python3 cdl2png.py cdl/smb1-w.cdl          test-out/smb1-w.png
 python3 cdl2png.py cdl/blastermaster-u.cdl test-out/blastermaster-u.png
+echo
 
-echo "=== test-out/ ==="
+echo "=== test-out/ (verify manually) ==="
 ls -1 test-out/
+echo
